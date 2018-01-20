@@ -188,7 +188,7 @@ class NN:
 
 
 if __name__ == '__main__':
-    datapath = os.path.join('..', '04. Datasett', 'Christoffer sine datasett', 'cleaned_data.csv')
+    datapath = os.path.join('data', 'cleaned_data.csv')
 
     nn_network = NN(datapath)
     nn_network.build_model()
