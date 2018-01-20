@@ -6,6 +6,9 @@ import _pickle as pickle
 import numpy as np
 
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+
+
 from keras import backend as K
 from keras.layers import *
 from keras.models import Model
@@ -32,6 +35,9 @@ class NN:
         self.y_data = self.dataset.iloc[:,-1].values
 
 
+        scaler = MinMaxScaler()
+        print(scaler.fit(self.x_data))
+        exit(0)
         #CHECK BOUNDARIES ON DATA SUCH THAT MAX IS 1 AND MIN IS 0
         #normalizing featurewise
         for i in range(self.x_data.shape[1]):
@@ -101,17 +107,17 @@ class NN:
                            metrics=['mae','mse',self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=20)
-        checkpoint = ModelCheckpoint(os.path.join('models', 'checkpoint_model.h5'), monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint(os.path.join('checkpoint_model.h5'), monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         log = self.model.fit(x=self.x_train,y=self.y_train, batch_size=self.batch_size, epochs = self.epochs,verbose=2,
                              callbacks=[checkpoint,early_stopping], validation_split=0.2,shuffle=True)
 
         print(log.history)
 
-        with open(os.path.join('models', 'results.pickle'), 'wb') as f:
+        with open(os.path.join('results.pickle'), 'wb') as f:
             pickle.dump(log.history, f)
 
-        self.model.save(os.path.join('models', 'model.h5'))
+        self.model.save(os.path.join('model.h5'))
 
         print('--Model traiend and saved--')
 
@@ -185,7 +191,7 @@ class NN:
 
 
 if __name__ == '__main__':
-    datapath = os.path.join('data', 'cleaned_data.csv')
+    datapath = os.path.join('..','data', 'cleaned_data.csv')
 
     nn_network = NN(datapath)
     nn_network.build_model()
