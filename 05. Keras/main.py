@@ -32,8 +32,10 @@ class NN:
         self.y_data = self.dataset.iloc[:,-1].values
 
 
+        #CHECK BOUNDARIES ON DATA SUCH THAT MAX IS 1 AND MIN IS 0
         #normalizing featurewise
         for i in range(self.x_data.shape[1]):
+            #-= MIN
             self.x_data[:,i] /= self.x_data[:,i].max()
 
 
@@ -43,19 +45,18 @@ class NN:
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_data, self.y_data,
                                                                                 test_size=0.1, random_state=42)
         #Hyperparameters
-        self.batch_size = 50
-        self.epochs = 250
+        self.batch_size = 32
+        self.epochs = 1000
         # vis_group = [0, 1, 2, 3, 20, 21]
         # self.dataset = self.dataset.iloc[:,vis_group]
 
     def build_model(self):
 
-        print(self.x_data.shape[1])
         self.alpha = 0.1
         self.drop_rate = 0.25
         input_tensor = Input([self.x_data.shape[1]])
 
-        x = Dense(50)(input_tensor)
+        x = Dense(100)(input_tensor)
         x = LeakyReLU(alpha=self.alpha)(x)
         x = BatchNormalization()(x)
 
@@ -86,7 +87,7 @@ class NN:
         # x = Dropout(rate=self.drop_rate)(x)
 
         x = Dense(1)(x)
-        x = LeakyReLU(alpha=self.alpha)(x)
+        # x = LeakyReLU(alpha=self.alpha)(x)
 
         self.model = Model(inputs=input_tensor, outputs=x)
         self.model.summary()
@@ -95,15 +96,15 @@ class NN:
     def train_network(self):
 
 
-        self.optimizer = optimizers.Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.005)
-        self.model.compile(loss='binary_crossentropy', optimizer=self.optimizer,
+        self.optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.005)
+        self.model.compile(loss='mae', optimizer=self.optimizer,
                            metrics=['mae','mse',self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=20)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
-        log = self.model.fit(x=self.x_train,y=self.y_train, batch_size=self.batch_size, epochs = self.epochs,verbose=0,
-                             callbacks=[checkpoint], validation_split=0.2,shuffle=True)
+        log = self.model.fit(x=self.x_train,y=self.y_train, batch_size=self.batch_size, epochs = self.epochs,verbose=2,
+                             callbacks=[checkpoint,early_stopping], validation_split=0.2,shuffle=True)
 
         print(log.history)
 
@@ -124,15 +125,11 @@ class NN:
         print(self.model.metrics_names)
         print(self.evaluation)
 
-
         print('Prediction --vs-- label')
-
-        # self.predictions *= self.maxy
-        # self.y_test *= self.maxy
         print(np.concatenate((self.predictions[0:10],np.reshape(self.y_test[0:10],(10,1))),axis=1))
 
         print('evaluating with numpy ')
-        print(self.rmse_numpy(self.y_test,self.predictions))
+        print(np.mean(self.rmse_numpy(self.y_test,self.predictions)))
 
 
     def visualize_data(self):
