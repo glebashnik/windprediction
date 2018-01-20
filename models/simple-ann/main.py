@@ -107,7 +107,7 @@ class NN:
                            metrics=['mae','mse',self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=20)
-        checkpoint = ModelCheckpoint(os.path.join('checkpoint_model.h5'), monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         log = self.model.fit(x=self.x_train,y=self.y_train, batch_size=self.batch_size, epochs = self.epochs,verbose=2,
                              callbacks=[checkpoint,early_stopping], validation_split=0.2,shuffle=True)
