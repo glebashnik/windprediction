@@ -8,12 +8,13 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
+from pandas import concat
 
-from keras import backend as K
-from keras.layers import *
-from keras.models import Model
-from keras import optimizers
-from keras.callbacks import EarlyStopping,ModelCheckpoint
+# from keras import backend as K
+# from keras.layers import *
+# from keras.models import Model
+# from keras import optimizers
+# from keras.callbacks import EarlyStopping,ModelCheckpoint
 from keras.regularizers import l2
 
 
@@ -30,33 +31,43 @@ class NN:
             exit(1)
 
 
-        #Organizing the data
-        self.x_data = self.dataset.iloc[:,0:-1].values
-        self.y_data = self.dataset.iloc[:,-1].values
+        self.validsplit = 0.7
+        self.testsplit = 0.9
 
-
-        scaler = MinMaxScaler()
-        print(scaler.fit(self.x_data))
-        exit(0)
-        #CHECK BOUNDARIES ON DATA SUCH THAT MAX IS 1 AND MIN IS 0
-        #normalizing featurewise
-        for i in range(self.x_data.shape[1]):
-            #-= MIN
-            self.x_data[:,i] /= self.x_data[:,i].max()
-
-
-        # self.y_data /= self.y_data.max()
-
-        #Splitting into train and test data sets with fixed seed
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_data, self.y_data,
-                                                                                test_size=0.1, random_state=42)
-        #Hyperparameters
         self.batch_size = 32
         self.epochs = 1000
-        # vis_group = [0, 1, 2, 3, 20, 21]
-        # self.dataset = self.dataset.iloc[:,vis_group]
 
-    def build_model(self):
+        self.data = self.dataset.values
+
+        #Normalizing data
+        scaler = MinMaxScaler(copy=True,feature_range=(0,1))
+        scaler.fit(self.data)
+        self.data = scaler.transform(self.data)
+
+        n_in = 10
+        n_out = 3
+
+        self.timeseries = self.series_to_supervised(data=self.data, n_in=n_in, n_out=n_out, dropnan=True)
+
+        self.timeseries_np = self.timeseries.values
+
+        self.timeseries_data = self.timeseries_np.reshape(self.timeseries_np.shape[0],n_in+n_out,self.data.shape[1])
+
+        self.x_data, self.y_data = self.timeseries_data[:,:,:-1],self.timeseries_data[:,:,-1]
+
+
+        self.x_train, self.x_valid, self.x_test = self.x_data[0:int(self.validsplit*self.x_data.shape[0]),:,:], \
+                                                  self.x_data[int(self.validsplit*self.x_data.shape[0]):int(self.testsplit*self.x_data.shape[0]),:,:], \
+                                                  self.x_data[int(self.testsplit*self.x_data.shape[0]):,:,:]
+
+        self.y_train, self.y_valid, self.y_test = self.y_data[0:int(self.validsplit*self.y_data.shape[0]),:], \
+                                                  self.y_data[int(self.validsplit*self.y_data.shape[0]):int(self.testsplit*self.y_data.shape[0]),:], \
+                                                  self.y_data[int(self.testsplit*self.y_data.shape[0]):,:]
+
+
+def build_model(self):
+        test_size=0.1, random_state=42)
+        #Hyperparameters
 
         self.alpha = 0.1
         self.drop_rate = 0.25
@@ -165,7 +176,7 @@ class NN:
         return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
 
     # convert series to supervised learning, time series data generation
-    def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
+    def series_to_supervised(self,data, n_in=1, n_out=1, dropnan=True):
         n_vars = 1 if type(data) is list else data.shape[1]
         df = DataFrame(data)
         cols, names = list(), list()
@@ -191,7 +202,7 @@ class NN:
 
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','data', 'cleaned_data.csv')
+    datapath = os.path.join('..','..','data', 'cleaned_data.csv')
 
     nn_network = NN(datapath)
     nn_network.build_model()
