@@ -101,17 +101,18 @@ class NN:
                            metrics=['mae','mse',self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=20)
-        checkpoint = ModelCheckpoint(os.path.join('models', 'checkpoint_model.h5'), monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+        print(os.path.dirname)
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         log = self.model.fit(x=self.x_train,y=self.y_train, batch_size=self.batch_size, epochs = self.epochs,verbose=2,
                              callbacks=[checkpoint,early_stopping], validation_split=0.2,shuffle=True)
 
         print(log.history)
 
-        with open(os.path.join('models', 'results.pickle'), 'wb') as f:
+        with open(os.path.join('results.pickle'), 'wb') as f:
             pickle.dump(log.history, f)
 
-        self.model.save(os.path.join('models', 'model.h5'))
+        self.model.save(os.path.join('model.h5'))
 
         print('--Model traiend and saved--')
 
