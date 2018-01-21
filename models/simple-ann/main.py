@@ -10,11 +10,11 @@ from sklearn.preprocessing import MinMaxScaler
 
 from pandas import concat
 
-# from keras import backend as K
-# from keras.layers import *
-# from keras.models import Model
-# from keras import optimizers
-# from keras.callbacks import EarlyStopping,ModelCheckpoint
+from keras import backend as K
+from keras.layers import *
+from keras.models import Model
+from keras import optimizers
+from keras.callbacks import EarlyStopping,ModelCheckpoint
 from keras.regularizers import l2
 
 
@@ -23,86 +23,99 @@ class NN:
     def __init__(self,datapath):
         self.datapath = datapath
         try:
-            self.dataset = read_csv(self.datapath, index_col=0)
+            self.dataset = read_csv(self.datapath, delimiter = ';', index_col=0, )
             self.dataset.index.name = 'index'
             print('Data loaded, shape: ' + str(self.dataset.shape))
         except:
             print('No data found on: ' + self.datapath)
             exit(1)
 
+        self.dataset = self.dataset.dropna(how='any')
 
         self.validsplit = 0.7
         self.testsplit = 0.9
 
-        self.batch_size = 32
+        self.batch_size = 100
         self.epochs = 1000
 
+
+        self.data1 = self.dataset.iloc[:,:-1]
+
+
+
+        # self.dataset.iloc[:,:-1] = self.data1
         self.data = self.dataset.values
 
-        #Normalizing data
-        scaler = MinMaxScaler(copy=True,feature_range=(0,1))
-        scaler.fit(self.data)
-        self.data = scaler.transform(self.data)
-
         n_in = 10
-        n_out = 3
+        n_out = 1
 
         self.timeseries = self.series_to_supervised(data=self.data, n_in=n_in, n_out=n_out, dropnan=True)
-
         self.timeseries_np = self.timeseries.values
+
 
         self.timeseries_data = self.timeseries_np.reshape(self.timeseries_np.shape[0],n_in+n_out,self.data.shape[1])
 
-        self.x_data, self.y_data = self.timeseries_data[:,:,:-1],self.timeseries_data[:,:,-1]
+
+        # self.x_data, self.y_data = self.timeseries_data[:,:,:-1],self.timeseries_data[:,:,-1]
+        self.x_data, self.y_data = self.data[:,:-1],self.data[:,-1:]
 
 
-        self.x_train, self.x_valid, self.x_test = self.x_data[0:int(self.validsplit*self.x_data.shape[0]),:,:], \
-                                                  self.x_data[int(self.validsplit*self.x_data.shape[0]):int(self.testsplit*self.x_data.shape[0]),:,:], \
-                                                  self.x_data[int(self.testsplit*self.x_data.shape[0]):,:,:]
+        # Normalizing data
+        scaler = MinMaxScaler(copy=True,feature_range=(0,1))
+        self.x_data = scaler.fit_transform(self.x_data)
 
-        self.y_train, self.y_valid, self.y_test = self.y_data[0:int(self.validsplit*self.y_data.shape[0]),:], \
-                                                  self.y_data[int(self.validsplit*self.y_data.shape[0]):int(self.testsplit*self.y_data.shape[0]),:], \
-                                                  self.y_data[int(self.testsplit*self.y_data.shape[0]):,:]
+        self.x_train, self.x_valid, self.x_test = self.x_data[0:int(self.validsplit*self.x_data.shape[0]),:], \
+                                                  self.x_data[int(self.validsplit*self.x_data.shape[0]):int(self.testsplit*self.x_data.shape[0]),:], \
+                                                  self.x_data[int(self.testsplit*self.x_data.shape[0]):,:]
+
+        self.x_train = self.x_train.reshape(self.x_train.shape[0],self.x_train.shape[1],1)
+        self.x_valid = self.x_valid.reshape(self.x_valid.shape[0],self.x_valid.shape[1],1)
+        self.x_test = self.x_test.reshape(self.x_test.shape[0],self.x_test.shape[1],1)
+
+        self.y_train, self.y_valid, self.y_test = self.y_data[0:int(self.validsplit*self.y_data.shape[0]),-1:], \
+                                                  self.y_data[int(self.validsplit*self.y_data.shape[0]):int(self.testsplit*self.y_data.shape[0]),-1:], \
+                                                  self.y_data[int(self.testsplit*self.y_data.shape[0]):,-1:]
+
+        # self.x_train2, self.x_test2, self.y_train2, self.y_test2 = train_test_split(self.x_data, self.y_data, random_state=42)
 
 
-def build_model(self):
-        test_size=0.1, random_state=42)
+
+    def build_model(self):
+
         #Hyperparameters
 
         self.alpha = 0.1
-        self.drop_rate = 0.25
-        input_tensor = Input([self.x_data.shape[1]])
+        self.drop_rate = 0.2
+        input_tensor = Input([self.x_train.shape[1],self.x_train.shape[2]])
+        print(input_tensor.shape)
+        # x = Flatten()(input_tensor)
 
-        x = Dense(100)(input_tensor)
+        # x = BatchNormalization()(input_tensor)
+
+
+        x = LSTM(50,return_sequences=True)(input_tensor)
         x = LeakyReLU(alpha=self.alpha)(x)
-        x = BatchNormalization()(x)
+        # x = BatchNormalization()(x)
 
         # x = Dropout(rate=self.drop_rate)(x)
 
-        x = Dense(100)(x)
+        x = LSTM(30,return_sequences=True)(x)
         x = LeakyReLU(alpha=self.alpha)(x)
-        x = BatchNormalization()(x)
+        # x = BatchNormalization()(x)
 
         # x = Dropout(rate=self.drop_rate)(x)
 
-        x = Dense(75)(x)
+        x = LSTM(20)(x)
         x = LeakyReLU(alpha=self.alpha)(x)
-        x = BatchNormalization()(x)
+        # x = BatchNormalization()(x)
 
         # x = Dropout(rate=self.drop_rate)(x)
-
-        x = Dense(50)(x)
-        x = LeakyReLU(alpha=self.alpha)(x)
-        x = BatchNormalization()(x)
-
-        # x = Dropout(rate=self.drop_rate)(x)
-
-        x = Dense(20)(x)
-        x = LeakyReLU(alpha=self.alpha)(x)
-        x = BatchNormalization()(x)
+        #
+        # x = Dense(20)(x)
+        # x = LeakyReLU(alpha=self.alpha)(x)
+        # x = BatchNormalization()(x)
 
         # x = Dropout(rate=self.drop_rate)(x)
-
         x = Dense(1)(x)
         # x = LeakyReLU(alpha=self.alpha)(x)
 
@@ -112,16 +125,16 @@ def build_model(self):
 
     def train_network(self):
 
-
         self.optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.005)
-        self.model.compile(loss='mae', optimizer=self.optimizer,
+        self.model.compile(loss='mse', optimizer='adadelta',
                            metrics=['mae','mse',self.rmse])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=20)
-        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+        early_stopping = EarlyStopping(monitor='val_loss', patience=40)
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+
 
         log = self.model.fit(x=self.x_train,y=self.y_train, batch_size=self.batch_size, epochs = self.epochs,verbose=2,
-                             callbacks=[checkpoint,early_stopping], validation_split=0.2,shuffle=True)
+                             callbacks=[checkpoint,early_stopping], validation_data=(self.x_valid,self.y_valid),shuffle=True)
 
         print(log.history)
 
@@ -202,7 +215,7 @@ def build_model(self):
 
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','..','data', 'cleaned_data.csv')
+    datapath = os.path.join('..','..','data', 'data-2.3.csv')
 
     nn_network = NN(datapath)
     nn_network.build_model()

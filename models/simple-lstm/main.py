@@ -100,6 +100,10 @@ class RNN:
     def predict(self):
         self.predictions = self.model.predict(self.x_test)
 
+        print(self.predictions[0:10])
+        print(self.y_test[0:10])
+        exit(0)
+
 
         self.evaluation = self.model.evaluate(self.x_test,self.y_test)
 
@@ -165,7 +169,7 @@ class RNN:
         return agg
 
 if __name__ == '__main__':
-    datapath = os.path.join('data', 'cleaned_data.csv')
+    datapath = os.path.join('..','..','data', 'cleaned_data.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()
