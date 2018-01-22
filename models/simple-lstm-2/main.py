@@ -14,24 +14,24 @@ from keras.callbacks import EarlyStopping,ModelCheckpoint
 from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
 
-
 class RNN:
 
     def __init__(self,datapath):
         self.datapath = datapath
         try:
-            self.dataset = read_csv(self.datapath, index_col=0)
+            self.dataset = read_csv(self.datapath, index_col=0, sep=';')
             self.dataset.index.name = 'index'
             print('Data loaded, shape: ' + str(self.dataset.shape))
         except:
             print('No data found on: ' + self.datapath)
             exit(1)
 
+        self.dataset = self.dataset.dropna()
 
         self.validsplit = 0.7
         self.testsplit = 0.9
-        self.batch_size = 32
-        self.epochs = 100
+        self.batch_size = 128
+        self.epochs = 250
 
         print(self.dataset)
 
@@ -42,11 +42,6 @@ class RNN:
         self.x_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
         self.x_scaler.fit(data_x)
         data_x = self.x_scaler.transform(data_x)
-
-        #Normalizing output with separate scaler in order to facilitate later inverse scaling
-        self.y_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
-        self.y_scaler.fit(data_y)
-        data_y = self.y_scaler.transform(data_y)
 
         self.dataset.iloc[:,:-1] = data_x
         self.dataset.iloc[:,-1:] = data_y
@@ -79,25 +74,20 @@ class RNN:
         self.y_test = self.y_data[int(self.testsplit * self.y_data.shape[0]):, -1:]
 
     def build_model(self):
-
-        self.alpha = 0.1
-
         self.model = Sequential()
 
-        self.model.add(LSTM(128, input_shape=(self.x_data.shape[1], self.x_data.shape[2]), return_sequences=True))
-        self.model.add(Dropout(0.15))
-        #self.model.add(LSTM(64, return_sequences=True))
-        #self.model.add(LSTM(32, return_sequences=True))
-        self.model.add(LSTM(1))
+        self.model.add(LSTM(64, input_shape=(self.x_data.shape[1], self.x_data.shape[2]), return_sequences=True))
+        self.model.add(Dropout(0.1))
+
+        self.model.add(LSTM(32))
+        self.model.add(Dropout(0.1))
+
+        self.model.add(Dense(1))
     
         self.model.summary()
-        print('Model created')
 
     def train_network(self):
-        self.optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.005)
-        self.model.compile(loss='mae', optimizer=self.optimizer,
-                           metrics=['mae','mse',self.rmse])
-        print("compiled")
+        self.model.compile(loss='mae', optimizer='adam', metrics=['mae','mse',self.rmse])
 
         # Perform early stop if there was not improvement for n epochs
         early_stopping = EarlyStopping(monitor='val_loss', patience=30)
@@ -109,35 +99,14 @@ class RNN:
         log = self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = self.epochs, verbose=2,
                             callbacks=[checkpoint, early_stopping], validation_split=0.2,shuffle=False)
 
-        #print(log.history)
-
-        # with open(os.path.join('results.pickle'), 'wb') as f:
-        #     pickle.dump(log.history, f)
-
-        self.model.save(os.path.join('model.h5'))
-
-        # print('--Model trained and saved--')
-
     def predict(self):
         self.predictions = self.model.predict(self.x_test)
-        print(self.x_test)
-        #print(self.x_test.shape)
-        #print(self.predictions.shape)
         self.evaluation = self.model.evaluate(self.x_test, self.y_test)
 
         print('Evaluating with test data')
         print(self.model.metrics_names)
         print(self.evaluation)
         print()
-
-        # print('Prediction --vs-- label')
-        # print(np.concatenate((inverse_predictions[0:10], np.reshape(inverse_actuals[0:10], (10,1))),axis=1))
-        # print()
-
-        # print('evaluating with numpy ')
-        # print(np.mean(self.rmse_numpy(self.y_test,inverse_predictions)))
-        # print()
-
 
     #RMSE loss function (missing in keras library)
     def rmse_numpy(self, y_true, y_pred):
@@ -171,14 +140,14 @@ class RNN:
         return agg
 
     def visualize(self):
-        inverse_predictions = self.y_scaler.inverse_transform(self.predictions)
-        inverse_actuals = self.y_scaler.inverse_transform(self.y_test)
+        inverse_predictions = self.predictions
+        inverse_actuals = self.y_test
 
         pyplot.plot(inverse_predictions, 'r--', inverse_actuals, 'b--')
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('data', 'cleaned_data.csv')
+    datapath = os.path.join('data', 'advanced_data2.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()

@@ -30,14 +30,28 @@ class NN:
         self.dataset = self.dataset.dropna()
 
         self.testsplit = 0.7
-        self.batch_size = 64
-        self.epochs = 1500
+        self.batch_size = 128
+        self.epochs = 2500
 
-        data_x = self.dataset.iloc[:,19:-1]
+        # Select only windspeed and direction as well as STORM data, number of working mills, delayed prod
+        # Currently only windspeed
+        # data_x = pd.concat([
+        #     #self.dataset.iloc[:,2:3], 
+        #     #self.dataset.iloc[:,6:7], 
+        #     self.dataset.iloc[:,10:11], 
+        #     self.dataset.iloc[:,14:15], 
+        #     self.dataset.iloc[:,18:-1]], 
+        #     axis=1)
+        # data_x = pd.concat([
+        #     self.dataset.iloc[:,0:-3], 
+        #     self.dataset.iloc[:,-2:-1]], 
+        #     axis=1)
+        data_x = self.dataset.iloc[:,0:-1]
         data_y = self.dataset.iloc[:,-1:]
 
-        print(data_x)
-        print(data_y)
+        print(data_x.shape)
+        print(data_y.shape)
+        #exit(0)
 
         #Normalizing inputs
         self.x_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
@@ -57,29 +71,37 @@ class NN:
 
     def build_model(self):
         self.model = Sequential()
+        alpha = 0.6
 
-        self.model.add(Dense(64, input_dim=self.x_data.shape[1], activation='relu'))
+        # Input layer
+        self.model.add(Dense(32, input_dim=self.x_data.shape[1]))
+        self.model.add(Activation('relu'))
 
-        self.model.add(Dense(32, activation='relu'))
+        self.model.add(Dense(16))
+        self.model.add(Activation('relu'))
+        #self.model.add(BatchNormalization())
 
-        self.model.add(Dense(32, activation='relu'))
+        self.model.add(Dense(16))
+        self.model.add(Activation('relu'))
+        #self.model.add(BatchNormalization())
 
-        self.model.add(Dense(8, activation='relu'))
-
-        self.model.add(Dense(2, activation='relu'))
-
+        # self.model.add(Dense(32))
+        # self.model.add(Activation('relu'))
+        # #self.model.add(BatchNormalization())
+        
+        # Output layer
         self.model.add(Dense(1))
     
         self.model.summary()
 
     def train_network(self):
-        self.model.compile(loss='mean_absolute_percentage_error', optimizer='adam',metrics=['mae','mse',self.rmse])
+        self.model.compile(loss='mae', optimizer='adam',metrics=['mae','mse',self.rmse])
 
         # Perform early stop if there was not improvement for n epochs
-        early_stopping = EarlyStopping(monitor='val_loss', patience=30)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=100)
 
         # Train the model
-        self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, callbacks=[early_stopping], epochs = self.epochs, verbose=2, shuffle=True)
+        self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, validation_split=0.2, callbacks=[early_stopping], epochs = self.epochs, verbose=2, shuffle=True)
 
     def predict(self):
         self.predictions = self.model.predict(self.x_test)
@@ -102,7 +124,9 @@ class NN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('data', 'data-2.3.csv')
+    np.random.seed(42)
+
+    datapath = os.path.join('data', 'Advanced_data2.csv')
 
     nn_network = NN(datapath)
     nn_network.build_model()
