@@ -11,6 +11,7 @@ from keras.layers import *
 from keras.models import Model, Sequential
 from keras import optimizers
 from keras.callbacks import EarlyStopping,ModelCheckpoint
+import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
 
@@ -30,10 +31,10 @@ class RNN:
 
         self.validsplit = 0.7
         self.testsplit = 0.9
-        self.batch_size = 128
-        self.epochs = 250
+        self.batch_size = 32
+        self.epochs = 1000
 
-        print(self.dataset)
+        #print(self.dataset)
 
         data_x = self.dataset.iloc[:,:-1]
         data_y = self.dataset.iloc[:,-1:]
@@ -48,8 +49,8 @@ class RNN:
         self.data = self.dataset.values
         
         # Number of timesteps we want to look back and on
-        n_in = 10
-        n_out = 2
+        n_in = 4
+        n_out = 1
 
         # Returns an (n_in * n_out) * num_vars NDFrame
         self.timeseries = self.series_to_supervised(data=self.data, n_in=n_in, n_out=n_out, dropnan=True)
@@ -76,13 +77,15 @@ class RNN:
     def build_model(self):
         self.model = Sequential()
 
-        self.model.add(LSTM(64, input_shape=(self.x_data.shape[1], self.x_data.shape[2]), return_sequences=True))
-        self.model.add(Dropout(0.1))
-
+        self.model.add(LSTM(64, return_sequences=True, input_shape=(self.x_data.shape[1], self.x_data.shape[2])))
         self.model.add(LSTM(32))
-        self.model.add(Dropout(0.1))
-
         self.model.add(Dense(1))
+
+
+        #BEST MODEL THUS FAR: (N_IN = 4, N_OUT = 1)
+        #self.model.add(LSTM(64, return_sequences=True, input_shape=(self.x_data.shape[1], self.x_data.shape[2])))
+        #self.model.add(LSTM(32))
+        #self.model.add(Dense(1))
     
         self.model.summary()
 
@@ -90,7 +93,7 @@ class RNN:
         self.model.compile(loss='mae', optimizer='adam', metrics=['mae','mse',self.rmse])
 
         # Perform early stop if there was not improvement for n epochs
-        early_stopping = EarlyStopping(monitor='val_loss', patience=30)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=60)
 
         # Save the best model each time
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
@@ -154,3 +157,5 @@ if __name__ == '__main__':
     nn_network.train_network()
     nn_network.predict()
     nn_network.visualize()
+    
+    exit(0)
