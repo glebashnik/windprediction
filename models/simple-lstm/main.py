@@ -35,9 +35,11 @@ class RNN:
         self.batch_size = 128
         self.epochs = 1000
 
+        #-----FABIAN---------
+
         self.data = self.dataset.values
 
-        #Normalizing data
+        #Normalizing data, input and output seperately
         data1, data2 = self.data[:,:-1],self.data[:,-1:]
         self.scaler1 = MinMaxScaler(copy=True,feature_range=(0,1))
         self.scaler2 = MinMaxScaler(copy=True, feature_range=(0,1))
@@ -45,10 +47,29 @@ class RNN:
         data2 = self.scaler2.fit_transform(data2)
         self.data = np.concatenate((data1,data2),axis=1)
 
+        #----EIRIK----
+        # data_x = self.dataset.iloc[:,:-1]
+        # data_y = self.dataset.iloc[:,-1:]
+        #
+        # #Normalizing data - only the input
+        # self.x_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
+        # self.x_scaler.fit(data_x)
+        # data_x = self.x_scaler.transform(data_x)
+        #
+        # #Normalizing output with separate scaler in order to facilitate later inverse scaling
+        # self.y_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
+        # self.y_scaler.fit(data_y)
+        # data_y = self.y_scaler.transform(data_y)
+        #
+        #
+        # self.dataset.iloc[:,:-1] = data_x
+        # self.dataset.iloc[:,-1:] = data_y
+        # self.data = self.dataset.values
+        #----------------------------
+        
         # Number of timesteps we want to look back and on
         n_in = 10
         n_out = 1
-
 
         # Returns an (n_in * n_out) * num_vars NDFrame
         self.timeseries = self.series_to_supervised(data=self.data, n_in=n_in, n_out=n_out, dropnan=True)
@@ -62,6 +83,7 @@ class RNN:
         # Data is everything but the two last rows in the third dimension (which contain the delayed and actual production values)
         self.x_data, self.y_data = self.timeseries_data[:self.timeseries_data.shape[0]-self.timeseries_data.shape[0] % self.batch_size, :,:-2],self.timeseries_data[:self.timeseries_data.shape[0]-self.timeseries_data.shape[0] % self.batch_size,:,-1:]
 
+        #Split for dividing the dataset in a factor of the batch size
         split = self.testsplit * self.x_data.shape[0]
         split -= split % self.batch_size
         split = int(split)
@@ -75,11 +97,19 @@ class RNN:
         # self.y_valid = self.y_data[int(self.validsplit * self.y_data.shape[0]):int(self.testsplit * self.y_data.shape[0]), :, :]
         self.y_test = self.y_data[split:, :, :]
 
+        # self.y_train = self.y_data[0:int(self.validsplit * self.y_data.shape[0]), -1:]
+        # self.y_valid = self.y_data[int(self.validsplit * self.y_data.shape[0]):int(self.testsplit * self.y_data.shape[0]), -1:]
+        # self.y_test = self.y_data[int(self.testsplit * self.y_data.shape[0]):, -1:]
+
+        print(self.x_train.shape)
+        print(self.y_test.shape)
+        exit(0)
 
     def build_model(self):
 
         self.alpha = 0.1
         self.model = Sequential()
+
         self.model.add(LSTM(11, batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]), return_sequences=True))
         # self.model.add(LeakyReLU(0.1))
         # self.model.add(Dropout(0.2))
@@ -90,6 +120,14 @@ class RNN:
         # self.model.add(LSTM(11, return_sequences=True))
 
         self.model.add(TimeDistributed(Dense(1)))
+
+
+        # self.model.add(LSTM(128, input_shape=(self.x_data.shape[1], self.x_data.shape[2]), return_sequences=True))
+        # self.model.add(Dropout(0.15))
+        # #self.model.add(LSTM(64, return_sequences=True))
+        # #self.model.add(LSTM(32, return_sequences=True))
+        # self.model.add(LSTM(1))
+
     
         self.model.summary()
         print('Model created')
@@ -108,16 +146,22 @@ class RNN:
 
 
         #Train the model
-        for i in range(self.epochs):
+        # for i in range(self.epochs):
+        #
+        #     self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
+        #                     callbacks=[checkpoint, early_stopping], validation_split=0,shuffle=False)
+        #     #Resetting states
+        #     self.model.reset_states()
+        #     print('Epoch: %.d' % i)
 
-            self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
-                            callbacks=[checkpoint, early_stopping], validation_split=0,shuffle=False)
-            #Resetting states
-            self.model.reset_states()
-            print('Epoch: %.d' % i)
 
         # self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs=self.epochs, verbose=2,
         #                callbacks=[checkpoint, early_stopping], validation_split=0, shuffle=False)
+
+        # Train the model
+        log = self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = self.epochs, verbose=2,
+                            callbacks=[checkpoint, early_stopping], validation_split=0.2,shuffle=False)
+
 
         #print(log.history)
 
@@ -135,6 +179,7 @@ class RNN:
         self.y_test_last = self.y_test[:,-1,:]
         self.predictions_last = self.predictions[:,-1,:]
 
+        #Inverse scaling back to original scaling
         self.y_test_last = self.scaler2.inverse_transform(self.y_test_last)
         self.predictions_last = self.scaler2.inverse_transform(self.predictions_last)
 
@@ -153,11 +198,9 @@ class RNN:
         print()
 
         print('RMSE ')
-        # print(np.mean(self.rmse_numpy(self.y_test_last,self.predictions_last)))
+        print(np.mean(self.rmse_numpy(self.y_test_last,self.predictions_last)))
         print('MAE')
         print(mean_absolute_error(self.y_test_last,self.predictions_last))
-
-        # print(self.mae(self.y_test_last,self.predictions_last))
 
 
     #RMSE loss function (missing in keras library)
@@ -194,10 +237,19 @@ class RNN:
             agg.dropna(inplace=True)
         return agg
 
+    def visualize(self):
+        inverse_predictions = self.y_scaler.inverse_transform(self.predictions)
+        inverse_actuals = self.y_scaler.inverse_transform(self.y_test)
+
+        pyplot.plot(inverse_predictions, 'r--', inverse_actuals, 'b--')
+        pyplot.show()
+
 if __name__ == '__main__':
-    datapath = os.path.join('..','..','data', 'Advanced_data2.csv')
+    datapath = os.path.join('..','..','data', 'data-2.3.csv')
+    # datapath = os.path.join('data', 'cleaned_data.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()
     nn_network.train_network()
     nn_network.predict()
+    nn_network.visualize()
