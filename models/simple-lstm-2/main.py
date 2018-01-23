@@ -40,8 +40,7 @@ class RNN:
 
         #Normalizing inputs
         self.x_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
-        self.x_scaler.fit(data_x)
-        data_x = self.x_scaler.transform(data_x)
+        data_x = self.x_scaler.fit_transform(data_x)
 
         #Normalizing inputs
         # self.y_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
@@ -50,7 +49,7 @@ class RNN:
 
         self.dataset.iloc[:,:-1] = data_x
         self.dataset.iloc[:,-1:] = data_y
-        self.data = self.dataset.values
+        self.data = np.concatenate((data_x, data_y), axis=1)
         
         # Number of timesteps we want to look back and on
         n_in = 6
@@ -66,23 +65,24 @@ class RNN:
         self.timeseries_data = self.timeseries_np.reshape(self.timeseries_np.shape[0], n_in+n_out ,self.data.shape[1])
 
         # Data is everything but the two last rows in the third dimension (which contain the delayed and actual production values)
-        self.x_data, self.y_data = self.timeseries_data[:,:,:-2],self.timeseries_data[:,:,-1]
+        self.x_data = self.timeseries_data[:self.timeseries_data.shape[0]-self.timeseries_data.shape[0] % self.batch_size, :,:-2]
+        self.y_data = self.timeseries_data[:self.timeseries_data.shape[0]-self.timeseries_data.shape[0] % self.batch_size,:,-1:]
+
+        #Split for dividing the dataset in a factor of the batch size
+        split = self.testsplit * self.x_data.shape[0]
+        split -= split % self.batch_size
+        split = int(split)
 
         # Create training and test sets for x
-        self.x_train = self.x_data[0:int(self.testsplit * self.x_data.shape[0]), :, :]
-        self.x_test = self.x_data[int(self.testsplit * self.x_data.shape[0]):, :, :]
+        self.x_train = self.x_data[:split, :, :]
+        self.x_test = self.x_data[split:, :, :]
 
         # Create training and test sets for y
-        self.y_train = self.y_data[0:int(self.testsplit * self.y_data.shape[0]), -1:]
-        self.y_test = self.y_data[int(self.testsplit * self.y_data.shape[0]):, -1:]
+        self.y_train = self.y_data[:split, :,:]
+        self.y_test = self.y_data[split:, :, :]
 
-        print(self.y_train.shape)
-
-        # Reshape to 3d for timedistributed
-        # self.y_train = self.y_train.reshape(self.y_train.shape[0], n_in + n_out, 1)
-        # self.y_test = self.y_test.reshape(self.y_test.shape[0], n_in + n_out, 1)
-
-        print(self.y_train.shape)
+        assert self.x_train.shape[0] % self.batch_size == 0, 'training sample size not divisible by batch size'
+        assert self.x_test.shape[0] % self.batch_size == 0, 'testing sample size not divisible by batch size'
 
     def build_model(self):
         self.model = Sequential()
@@ -97,13 +97,12 @@ class RNN:
 
 
         # BEST MODEL THUS FAR: (N_IN = 6, N_OUT = 1, split=0.9, patience=40)
-        self.model.add(LSTM(64, return_sequences=True,
-                                input_shape=(self.x_data.shape[1], self.x_data.shape[2])))
-        self.model.add(Dropout(0.2))
+        self.model.add(LSTM(32, return_sequences=True,
+                                batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]),
+                                stateful=True))        
+        self.model.add(LSTM(32, return_sequences=True))
         
-        self.model.add(LSTM(32))
-        
-        self.model.add(Dense(1))
+        self.model.add(TimeDistributed(Dense(1)))
     
         self.model.summary()
 
@@ -111,14 +110,17 @@ class RNN:
         self.model.compile(loss='mae', optimizer='adam', metrics=['mae','mse',self.rmse])
 
         # Perform early stop if there was not improvement for n epochs
-        early_stopping = EarlyStopping(monitor='val_loss', patience=30)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=50)
 
         # Save the best model each time
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
-        # Train the model, use 15% of the training data as validation set
-        log = self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = self.epochs, verbose=2,
+        for i in range(self.epochs):
+            self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
                             callbacks=[checkpoint, early_stopping], validation_split=0.2, shuffle=False)
+            #Resetting states
+            self.model.reset_states()
+            print('Epoch: %.d' % i)
 
     def predict(self):
         # Load the best model found during training
