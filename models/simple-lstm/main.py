@@ -29,11 +29,12 @@ class RNN:
             exit(1)
 
         self.dataset = self.dataset.dropna(how='any')
+        self.dataset = self.dataset.drop(['antall_fungerende'], axis=1)
 
         # self.validsplit = 0.7
-        self.testsplit = 0.8
+        self.testsplit = 0.9
         self.batch_size = 128
-        self.epochs = 1000
+        self.epochs = 500
 
         #-----FABIAN---------
 
@@ -101,21 +102,22 @@ class RNN:
         # self.y_valid = self.y_data[int(self.validsplit * self.y_data.shape[0]):int(self.testsplit * self.y_data.shape[0]), -1:]
         # self.y_test = self.y_data[int(self.testsplit * self.y_data.shape[0]):, -1:]
 
-        print(self.x_train.shape)
-        print(self.y_test.shape)
-        exit(0)
+        print('Training size: ', self.x_train.shape)
+        print('Testing size: ', self.x_test.shape)
+        assert self.x_train.shape[0] % self.batch_size == 0, 'training sample size not divisible by batch size'
+        assert self.x_test.shape[0] % self.batch_size == 0, 'testing sample size not divisible by batch size'
 
     def build_model(self):
 
         self.alpha = 0.1
         self.model = Sequential()
 
-        self.model.add(LSTM(11, batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]), return_sequences=True))
+        self.model.add(LSTM(64, batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]), return_sequences=True))
         # self.model.add(LeakyReLU(0.1))
+        self.model.add(Dropout(0.2))
+        self.model.add(LSTM(32, return_sequences=True))
         # self.model.add(Dropout(0.2))
-        self.model.add(LSTM(11, return_sequences=True))
-        # self.model.add(Dropout(0.2))
-        self.model.add(LSTM(11, return_sequences=True))
+        # self.model.add(LSTM(11, return_sequences=True))
 
         # self.model.add(LSTM(11, return_sequences=True))
 
@@ -139,28 +141,28 @@ class RNN:
         print("compiled")
 
         # Perform early stop if there was not improvement for n epochs
-        early_stopping = EarlyStopping(monitor='loss', patience=30)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=30)
 
         # Save the best model each time
-        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='loss', verbose=0, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
 
         #Train the model
-        # for i in range(self.epochs):
-        #
-        #     self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
-        #                     callbacks=[checkpoint, early_stopping], validation_split=0,shuffle=False)
-        #     #Resetting states
-        #     self.model.reset_states()
-        #     print('Epoch: %.d' % i)
+        for i in range(self.epochs):
+
+            self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
+                            callbacks=[checkpoint, early_stopping], validation_split=0,shuffle=False)
+            #Resetting states
+            self.model.reset_states()
+            print('Epoch: %.d' % i)
 
 
         # self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs=self.epochs, verbose=2,
         #                callbacks=[checkpoint, early_stopping], validation_split=0, shuffle=False)
 
         # Train the model
-        log = self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = self.epochs, verbose=2,
-                            callbacks=[checkpoint, early_stopping], validation_split=0.2,shuffle=False)
+        # log = self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = self.epochs, verbose=2,
+        #                     callbacks=[checkpoint, early_stopping], validation_split=0,shuffle=False)
 
 
         #print(log.history)
@@ -245,7 +247,7 @@ class RNN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','..','data', 'data-2.3.csv')
+    datapath = os.path.join('..','..','data', 'Advanced_data2.csv')
     # datapath = os.path.join('data', 'cleaned_data.csv')
 
     nn_network = RNN(datapath)
