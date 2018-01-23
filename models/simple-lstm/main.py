@@ -5,6 +5,7 @@ import os
 import _pickle as pickle
 import numpy as np
 
+from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from keras import backend as K
 from keras.layers import *
@@ -20,31 +21,34 @@ class RNN:
     def __init__(self,datapath):
         self.datapath = datapath
         try:
-            self.dataset = read_csv(self.datapath, index_col=0)
+            self.dataset = read_csv(self.datapath, index_col=0,delimiter=(';'))
             self.dataset.index.name = 'index'
             print('Data loaded, shape: ' + str(self.dataset.shape))
         except:
             print('No data found on: ' + self.datapath)
             exit(1)
 
+        self.dataset = self.dataset.dropna(how='any')
 
-        self.validsplit = 0.7
-        self.testsplit = 0.9
+        # self.validsplit = 0.7
+        self.testsplit = 0.8
         self.batch_size = 128
-        self.epochs = 100
+        self.epochs = 1000
 
         self.data = self.dataset.values
-        #print("Data before normalizing: ")
-        #print(self.data)
 
         #Normalizing data
-        scaler = MinMaxScaler(copy=True,feature_range=(0,1))
-        scaler.fit(self.data)
-        self.data = scaler.transform(self.data)
+        data1, data2 = self.data[:,:-1],self.data[:,-1:]
+        self.scaler1 = MinMaxScaler(copy=True,feature_range=(0,1))
+        self.scaler2 = MinMaxScaler(copy=True, feature_range=(0,1))
+        data1 = self.scaler1.fit_transform(data1)
+        data2 = self.scaler2.fit_transform(data2)
+        self.data = np.concatenate((data1,data2),axis=1)
 
         # Number of timesteps we want to look back and on
         n_in = 10
-        n_out = 3
+        n_out = 1
+
 
         # Returns an (n_in * n_out) * num_vars NDFrame
         self.timeseries = self.series_to_supervised(data=self.data, n_in=n_in, n_out=n_out, dropnan=True)
@@ -56,78 +60,112 @@ class RNN:
         self.timeseries_data = self.timeseries_np.reshape(self.timeseries_np.shape[0], n_in+n_out ,self.data.shape[1])
 
         # Data is everything but the two last rows in the third dimension (which contain the delayed and actual production values)
-        self.x_data, self.y_data = self.timeseries_data[:,:,:-2],self.timeseries_data[:,:,-1]
+        self.x_data, self.y_data = self.timeseries_data[:self.timeseries_data.shape[0]-self.timeseries_data.shape[0] % self.batch_size, :,:-2],self.timeseries_data[:self.timeseries_data.shape[0]-self.timeseries_data.shape[0] % self.batch_size,:,-1:]
+
+        split = self.testsplit * self.x_data.shape[0]
+        split -= split % self.batch_size
+        split = int(split)
 
         # Create training, validation and test sets for x
-        self.x_train = self.x_data[0:int(self.validsplit * self.x_data.shape[0]), :, :]
-        self.x_valid = self.x_data[int(self.validsplit * self.x_data.shape[0]):int(self.testsplit * self.x_data.shape[0]), : ,:]
-        self.x_test = self.x_data[int(self.testsplit * self.x_data.shape[0]):, :, :]
-
+        self.x_train = self.x_data[:split, :, :]
+        # self.x_valid = self.x_data[int(self.validsplit * self.x_data.shape[0]):int(self.testsplit * self.x_data.shape[0]), : ,:]
+        self.x_test = self.x_data[split:, :, :]
         # Create training, validation and test sets for y
-        self.y_train = self.y_data[0:int(self.validsplit * self.y_data.shape[0]), -2:]
-        self.y_valid = self.y_data[int(self.validsplit * self.y_data.shape[0]):int(self.testsplit * self.y_data.shape[0]), -2:]
-        self.y_test = self.y_data[int(self.testsplit * self.y_data.shape[0]):, -2:]
+        self.y_train = self.y_data[:split, :,:]
+        # self.y_valid = self.y_data[int(self.validsplit * self.y_data.shape[0]):int(self.testsplit * self.y_data.shape[0]), :, :]
+        self.y_test = self.y_data[split:, :, :]
+
 
     def build_model(self):
 
         self.alpha = 0.1
-
         self.model = Sequential()
-        self.model.add(LSTM(32, input_shape=(self.x_data.shape[1], self.x_data.shape[2]), return_sequences=True))
-        self.model.add(LSTM(2))
+        self.model.add(LSTM(11, batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]), return_sequences=True))
+        # self.model.add(LeakyReLU(0.1))
+        # self.model.add(Dropout(0.2))
+        self.model.add(LSTM(11, return_sequences=True))
+        # self.model.add(Dropout(0.2))
+        self.model.add(LSTM(11, return_sequences=True))
+
+        # self.model.add(LSTM(11, return_sequences=True))
+
+        self.model.add(TimeDistributed(Dense(1)))
     
         self.model.summary()
         print('Model created')
 
     def train_network(self):
-        self.optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.005)
-        self.model.compile(loss='mae', optimizer=self.optimizer,
+        self.optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0005)
+        self.model.compile(loss='mae', optimizer='adadelta',
                            metrics=['mae','mse',self.rmse])
         print("compiled")
 
         # Perform early stop if there was not improvement for n epochs
-        early_stopping = EarlyStopping(monitor='val_loss', patience=30)
+        early_stopping = EarlyStopping(monitor='loss', patience=30)
 
         # Save the best model each time
-        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='loss', verbose=0, save_best_only=True, mode='min')
 
-        # Train the model
-        log = self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = self.epochs, verbose=2,
-                            callbacks=[checkpoint, early_stopping], validation_split=0.2,shuffle=True)
+
+        #Train the model
+        for i in range(self.epochs):
+
+            self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
+                            callbacks=[checkpoint, early_stopping], validation_split=0,shuffle=False)
+            #Resetting states
+            self.model.reset_states()
+            print('Epoch: %.d' % i)
+
+        # self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs=self.epochs, verbose=2,
+        #                callbacks=[checkpoint, early_stopping], validation_split=0, shuffle=False)
 
         #print(log.history)
 
         # with open(os.path.join('results.pickle'), 'wb') as f:
         #     pickle.dump(log.history, f)
 
-        self.model.save(os.path.join('model.h5'))
+        # self.model.save(os.path.join('model.h5'))
 
-        # print('--Model trained and saved--')
+        print('--Model trained and saved--')
 
     def predict(self):
-        self.predictions = self.model.predict(self.x_test)
+        self.predictions = self.model.predict(self.x_test, batch_size=self.batch_size)
+
+        #Look only on the last prediction of the time series
+        self.y_test_last = self.y_test[:,-1,:]
+        self.predictions_last = self.predictions[:,-1,:]
+
+        self.y_test_last = self.scaler2.inverse_transform(self.y_test_last)
+        self.predictions_last = self.scaler2.inverse_transform(self.predictions_last)
 
 
-        self.evaluation = self.model.evaluate(self.x_test, self.y_test)
+        self.evaluation = self.model.evaluate(self.x_test, self.y_test, batch_size=self.batch_size)
 
 
-        print('Evaluating with test data')
-        print(self.model.metrics_names)
-        print(self.evaluation)
-        print()
+        # print('Evaluating with test data, normalized')
+        # print(self.model.metrics_names)
+        # print(self.evaluation)
+        # print()
 
         print('Prediction --vs-- label')
-        print(np.concatenate((self.predictions[0:10], np.reshape(self.y_test[0:10], (10,2))),axis=1))
+        # print(np.concatenate((self.predictions[0:10], np.reshape(self.y_test[0:10], (10,1))),axis=1))
+        print(np.concatenate((self.predictions_last[0:20], self.y_test_last[0:20]),axis=1))
         print()
 
-        print('evaluating with numpy ')
-        print(np.mean(self.rmse_numpy(self.y_test,self.predictions)))
-        print()
+        print('RMSE ')
+        # print(np.mean(self.rmse_numpy(self.y_test_last,self.predictions_last)))
+        print('MAE')
+        print(mean_absolute_error(self.y_test_last,self.predictions_last))
+
+        # print(self.mae(self.y_test_last,self.predictions_last))
 
 
     #RMSE loss function (missing in keras library)
     def rmse_numpy(self, y_true, y_pred):
         return np.sqrt(np.mean(np.square(y_pred - y_true), axis=-1))
+
+    def mae(self, y_true, y_pred):
+        return np.mean(np.abs(y_pred-y_true))
 
     def rmse(self, y_true, y_pred):
         return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
@@ -157,8 +195,7 @@ class RNN:
         return agg
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','..','data', 'cleaned_data.csv')
-
+    datapath = os.path.join('..','..','data', 'Advanced_data2.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()

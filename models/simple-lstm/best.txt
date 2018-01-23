@@ -1,0 +1,58 @@
+ - 1s - loss: 0.0711 - mean_absolute_error: 0.0711 - mean_squared_error: 0.0105 - rmse: 0.0711 - val_loss: 0.0649 - val_mean_absolute_error: 0.0649 - val_mean_squared_error: 0.0091 - val_rmse: 0.0649
+Epoch 680/1000
+ - 1s - loss: 0.0711 - mean_absolute_error: 0.0711 - mean_squared_error: 0.0106 - rmse: 0.0711 - val_loss: 0.0647 - val_mean_absolute_error: 0.0647 - val_mean_squared_error: 0.0091 - val_rmse: 0.0647
+Epoch 681/1000
+ - 1s - loss: 0.0712 - mean_absolute_error: 0.0712 - mean_squared_error: 0.0106 - rmse: 0.0712 - val_loss: 0.0644 - val_mean_absolute_error: 0.0644 - val_mean_squared_error: 0.0090 - val_rmse: 0.0644
+--Model trained and saved--
+
+ 32/252 [==>...........................] - ETA: 0s
+128/252 [==============>...............] - ETA: 0s
+252/252 [==============================] - 0s 559us/step
+Evaluating with test data, normalized
+['loss', 'mean_absolute_error', 'mean_squared_error', 'rmse']
+[0.066928427548162514, 0.066928431332584415, 0.0096051115838308183, 0.066928431332584415]
+
+Prediction --vs-- label
+[[ 37.42517471  35.47373145]
+ [ 37.24419022  34.7537146 ]
+ [ 37.42440796  33.17298047]
+ [ 36.42106247  33.17496558]
+ [ 35.4152298   32.33829852]
+ [ 34.81539154  34.329948  ]
+ [ 33.0184288   31.94799805]
+ [ 30.51177979  29.39748242]
+ [ 25.56235313  25.74856494]
+ [ 21.26752472  10.62743286]
+ [ 17.40992355   5.12581663]
+ [ 14.3349905    6.25154974]
+ [ 15.88888741  17.39419928]
+ [ 18.19636536  30.74441553]
+ [ 19.40317535  14.04289941]
+ [ 14.42428589  10.40798303]
+ [ 13.32586384  13.1930329 ]
+ [ 12.80405998  19.45696564]
+ [ 12.21638393  22.13133203]
+ [ 11.53876114  22.41098279]]
+
+RMSE 
+2.2321774082
+MAE
+2.2321774082
+2.2321774082
+
+
+    def build_model(self):
+
+        self.alpha = 0.1
+        self.model = Sequential()
+        self.model.add(LSTM(11, input_shape=(self.x_train.shape[1], self.x_train.shape[2]), return_sequences=True))
+        # self.model.add(LeakyReLU(0.1))
+
+        self.model.add(LSTM(11, return_sequences=True))
+
+        self.model.add(LSTM(11, return_sequences=True))
+
+        self.model.add(TimeDistributed(Dense(1)))
+    
+        self.model.summary()
+        print('Model created')

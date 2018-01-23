@@ -68,15 +68,15 @@ class NN:
                                                   self.x_data[int(self.validsplit*self.x_data.shape[0]):int(self.testsplit*self.x_data.shape[0]),:], \
                                                   self.x_data[int(self.testsplit*self.x_data.shape[0]):,:]
 
-        self.x_train = self.x_train.reshape(self.x_train.shape[0],self.x_train.shape[1],1)
-        self.x_valid = self.x_valid.reshape(self.x_valid.shape[0],self.x_valid.shape[1],1)
-        self.x_test = self.x_test.reshape(self.x_test.shape[0],self.x_test.shape[1],1)
+        # self.x_train = self.x_train.reshape(self.x_train.shape[0],self.x_train.shape[1],1)
+        # self.x_valid = self.x_valid.reshape(self.x_valid.shape[0],self.x_valid.shape[1],1)
+        # self.x_test = self.x_test.reshape(self.x_test.shape[0],self.x_test.shape[1],1)
 
         self.y_train, self.y_valid, self.y_test = self.y_data[0:int(self.validsplit*self.y_data.shape[0]),-1:], \
                                                   self.y_data[int(self.validsplit*self.y_data.shape[0]):int(self.testsplit*self.y_data.shape[0]),-1:], \
                                                   self.y_data[int(self.testsplit*self.y_data.shape[0]):,-1:]
 
-        # self.x_train2, self.x_test2, self.y_train2, self.y_test2 = train_test_split(self.x_data, self.y_data, random_state=42)
+        self.x_train2, self.x_test2, self.y_train2, self.y_test2 = train_test_split(self.x_data, self.y_data, test_size=0.3, random_state=64)
 
 
 
@@ -85,27 +85,34 @@ class NN:
         #Hyperparameters
 
         self.alpha = 0.1
-        self.drop_rate = 0.2
-        input_tensor = Input([self.x_train.shape[1],self.x_train.shape[2]])
+        self.drop_rate = 0.1
+        self.l2value = 0.01
+        input_tensor = Input([self.x_train.shape[1]])#,self.x_train.shape[2]])
         print(input_tensor.shape)
         # x = Flatten()(input_tensor)
 
         # x = BatchNormalization()(input_tensor)
 
-
-        x = LSTM(50,return_sequences=True)(input_tensor)
+        x = Dense(60,activity_regularizer=l2(self.l2value))(input_tensor)
         x = LeakyReLU(alpha=self.alpha)(x)
         # x = BatchNormalization()(x)
 
-        # x = Dropout(rate=self.drop_rate)(x)
+        x = Dropout(rate=self.drop_rate)(x)
 
-        x = LSTM(30,return_sequences=True)(x)
+
+        x = Dense(40,activity_regularizer=l2(self.l2value))(input_tensor)
         x = LeakyReLU(alpha=self.alpha)(x)
         # x = BatchNormalization()(x)
 
-        # x = Dropout(rate=self.drop_rate)(x)
+        x = Dropout(rate=self.drop_rate)(x)
 
-        x = LSTM(20)(x)
+        x = Dense(30,activity_regularizer=l2(self.l2value))(x)
+        x = LeakyReLU(alpha=self.alpha)(x)
+        # x = BatchNormalization()(x)
+
+        x = Dropout(rate=self.drop_rate)(x)
+
+        x = Dense(20,activity_regularizer=l2(self.l2value))(x)
         x = LeakyReLU(alpha=self.alpha)(x)
         # x = BatchNormalization()(x)
 
@@ -126,15 +133,15 @@ class NN:
     def train_network(self):
 
         self.optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.005)
-        self.model.compile(loss='mse', optimizer='adadelta',
+        self.model.compile(loss='mae', optimizer='adadelta',
                            metrics=['mae','mse',self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=40)
-        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='loss', verbose=1, save_best_only=True, mode='min')
 
 
-        log = self.model.fit(x=self.x_train,y=self.y_train, batch_size=self.batch_size, epochs = self.epochs,verbose=2,
-                             callbacks=[checkpoint,early_stopping], validation_data=(self.x_valid,self.y_valid),shuffle=True)
+        log = self.model.fit(x=self.x_train2,y=self.y_train2, batch_size=self.batch_size, epochs = self.epochs,verbose=2,
+                             callbacks=[checkpoint,early_stopping], validation_split=0,shuffle=True)
 
         print(log.history)
 
@@ -146,20 +153,19 @@ class NN:
         print('--Model traiend and saved--')
 
     def predict(self):
-        self.predictions = self.model.predict(self.x_test)
+        self.predictions = self.model.predict(self.x_test2)
 
-
-        self.evaluation = self.model.evaluate(self.x_test,self.y_test)
+        self.evaluation = self.model.evaluate(self.x_test2,self.y_test2)
 
         print('Evaluating with test data')
         print(self.model.metrics_names)
         print(self.evaluation)
 
         print('Prediction --vs-- label')
-        print(np.concatenate((self.predictions[0:10],np.reshape(self.y_test[0:10],(10,1))),axis=1))
+        print(np.concatenate((self.predictions[0:10],np.reshape(self.y_test2[0:10],(10,1))),axis=1))
 
         print('evaluating with numpy ')
-        print(np.mean(self.rmse_numpy(self.y_test,self.predictions)))
+        print(np.mean(self.rmse_numpy(self.y_test2,self.predictions)))
 
 
     def visualize_data(self):
