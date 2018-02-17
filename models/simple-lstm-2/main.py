@@ -51,10 +51,11 @@ class RNN:
         self.dataset.iloc[:,:-1] = data_x
         self.dataset.iloc[:,-1:] = data_y
         self.data = self.dataset.values
+
         
         # Number of timesteps we want to look back and on
         n_in = 6
-        n_out = 0
+        n_out = 1
 
         # Returns an (n_in * n_out) * num_vars NDFrame
         self.timeseries = self.series_to_supervised(data=self.data, n_in=n_in, n_out=n_out, dropnan=True)
@@ -175,7 +176,7 @@ class RNN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('data', 'advanced_data2.csv')
+    datapath = os.path.join('..','..','data', 'advanced_data2.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()
