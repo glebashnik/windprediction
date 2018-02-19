@@ -38,9 +38,6 @@ def extract_data(datapath, normalize = True):
         dataset.iloc[:,:-1] = data_x
         dataset.iloc[:,-1:] = data_y
 
-    print('Train and test data loaded with the shapes {} and {}, respectively'.format(data_x.shape,data_y.shape))
-
-
     return dataset
 
 
@@ -48,12 +45,12 @@ def extract_data(datapath, normalize = True):
 def extract_pearson_features(dataset, treshold = 0.5):
 
     pearson_corr = dataset.corr(method='pearson',min_periods = 1)
+    topcorr = pearson_corr.iloc[-1]
 
     print('\nPearson correlation with total production as target\n')
-    print(pearson_corr['YVIK-YtreVikna1-Sum-produksjon'])
+    print(topcorr)
     print('\n')
 
-    topcorr = pearson_corr['YVIK-YtreVikna1-Sum-produksjon']
 
 
     n_dropped = 0
@@ -82,12 +79,10 @@ def extract_PCA_features(dataset, n_components = 10):
 
     data = np.concatenate((data_x_pca, data_y),axis = 1)
 
-    return data
+    return data, pca
     
 
 def prediction(data, testsize = 0.15):
-
-    print(dataset.shape)
 
     x_train, x_test, y_train, y_test = train_test_split(data[:,:-1], data[:,-1:], test_size=testsize, random_state=666)
 
@@ -101,15 +96,11 @@ def prediction(data, testsize = 0.15):
     return predictions, y_test
 
 
-
-
 def visualize(pred_list, legend, scope = 0.2):
 
     length = int(scope * pred_list[0].shape[0])
 
-    # plt.plot(pred_list[0])
     for i,pred in enumerate(pred_list):
-
         plt.plot(pred[0:length])
 
     plt.legend(legend, loc='upper right')
@@ -117,16 +108,19 @@ def visualize(pred_list, legend, scope = 0.2):
 
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','data', 'advanced_data2.csv')
+    datapath_old = os.path.join('..','data', 'Advanced_data2.csv')
+    datapath_simple = os.path.join('..','data', 'Data_simple.csv')
+    datapath_advanced = os.path.join('..','data', 'Data_advanced.csv')
+
     testsize = 0.15
     n_components = 12
     treshold = 0.7
 
-    dataset = extract_data(datapath)
-    variables = dataset.columns
+
+    dataset = extract_data(datapath_old)
 
     # Extract PCA features
-    PCA_data = extract_PCA_features(dataset,n_components)
+    PCA_data, PCA_model = extract_PCA_features(dataset,n_components)
 
     # Only variables with acceptable pearson correlation with output is allowed to pass
     pearson_dataset = extract_pearson_features(dataset, treshold)
@@ -141,6 +135,7 @@ if __name__ == '__main__':
     print('Predicting with pearson correlations above {}, gives {} features'.format(treshold, pearson_dataset.shape[1]))
     pearson_pred, y_test = prediction(pearson_dataset.values, testsize)
 
+    # Compare the prediction methods
     visualize([y_test,raw_pred,PCA_pred,pearson_pred],legend=['GT','Raw','PCA','Pearson'],scope = 0.2)
 
     exit(0)
