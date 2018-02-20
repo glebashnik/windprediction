@@ -14,6 +14,13 @@ import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
 
+# Fix on windows bug from the Nov 2017 update
+import win_unicode_console
+win_unicode_console.enable()
+
+# from tensorflow.python.client import device_lib
+# print(device_lib.list_local_devices())
+
 class RNN:
 
     def __init__(self, datapath):
@@ -28,7 +35,7 @@ class RNN:
 
         self.dataset = self.dataset.dropna()
 
-        self.testsplit = 0.8
+        self.testsplit = 0.5
         self.batch_size = 32
         self.epochs = 100
 
@@ -112,19 +119,24 @@ class RNN:
         epochs_since_best = 0
         best_val_loss = float('inf')
 
+
+        # Creates the closest validation splitt divisible by batch size to 0.2
+        samples_split = self.x_train.shape[0]
+        val_split = ((0.2 * samples_split - ((0.2 * samples_split) % self.batch_size))/samples_split)
+
         for i in range(self.epochs):
-            log = self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, validation_split=0.2, epochs = 1, verbose=1, shuffle=False)
+            self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, validation_split=val_split, epochs = 1, verbose=2, shuffle=False)
             
-            # Early stopping
-            epochs_since_best += 1
-            if log.history['val_loss'][0] < best_val_loss:
-                self.model.save(os.path.join('checkpoint_model.h5'))
-                print("Improved model, saving...")
-                epochs_since_best = 0
-                best_val_loss = log.history['val_loss']
-            elif epochs_since_best >= patience:
-                print("Exceeded patience, halting training...")
-                break
+            # # Early stopping
+            # epochs_since_best += 1
+            # if log.history['val_loss'][0] < best_val_loss:
+            #     self.model.save(os.path.join('checkpoint_model.h5'))
+            #     print("Improved model, saving...")
+            #     epochs_since_best = 0
+            #     best_val_loss = log.history['val_loss']
+            # elif epochs_since_best >= patience:
+            #     print("Exceeded patience, halting training...")
+            #     break
                 
             print()
             
@@ -134,7 +146,7 @@ class RNN:
 
     def predict(self):
         # Load best found model
-        self.model.load_weights(os.path.join('checkpoint_model.h5'))
+        # self.model.load_weights(os.path.join('checkpoint_model.h5'))
 
         self.predictions = self.model.predict(self.x_test, batch_size=self.batch_size)
         # self.predictions_last = self.predictions[:,-1,:]
@@ -193,7 +205,7 @@ class RNN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','..','data', 'data_bessaker_advanced.csv')
+    datapath = os.path.join('..','..','data', 'Data_advanced.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()

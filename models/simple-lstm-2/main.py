@@ -14,6 +14,10 @@ import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
 
+# Fix on windows bug from the Nov 2017 update
+import win_unicode_console
+win_unicode_console.enable()
+
 class RNN:
 
     def __init__(self, datapath):
@@ -91,7 +95,12 @@ class RNN:
         early_stopping = EarlyStopping(monitor='val_loss', patience=15)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='loss', verbose=0, save_best_only=True, mode='min')
 
-        self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, callbacks=[early_stopping, checkpoint], validation_split=0.2, epochs = self.epochs, verbose=1, shuffle=False)
+        # Creates the closest validation splitt divisible by batch size to 0.2
+        samples_split = self.x_train.shape[0]
+        val_split = ((0.2 * samples_split - ((0.2 * samples_split) % self.batch_size))/samples_split)
+
+
+        self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, callbacks=[early_stopping, checkpoint], validation_split=val_split, epochs = self.epochs, verbose=1, shuffle=False)
 
     def predict(self):
         # Load best found model
@@ -143,7 +152,7 @@ class RNN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('data', 'Data_advanced.csv')
+    datapath = os.path.join('..','..','data', 'Data_advanced.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()
