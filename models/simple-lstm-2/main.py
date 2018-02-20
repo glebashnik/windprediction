@@ -114,7 +114,7 @@ class RNN:
         early_stopping = EarlyStopping(monitor='val_loss', patience=50)
 
         # Save the best model each time
-        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 
         for i in range(self.epochs):
             self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
