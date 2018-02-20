@@ -92,7 +92,7 @@ class RNN:
                                 #activation='softsign',
                                 batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]),
                                 stateful=True))
-        ))
+        
 
         # self.model.add(Dropout(0.15))
         
