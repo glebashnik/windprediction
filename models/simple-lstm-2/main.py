@@ -87,7 +87,11 @@ class RNN:
 
     def train_network(self):
         self.model.compile(loss='mae', optimizer='adam', metrics=['mae','mse',self.rmse])
-        self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, validation_split=0.2, epochs = self.batch_size, verbose=1, shuffle=False)
+
+        early_stopping = EarlyStopping(monitor='val_loss', patience=15)
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='loss', verbose=0, save_best_only=True, mode='min')
+
+        self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, callbacks=[early_stopping, checkpoint], validation_split=0.2, epochs = self.epochs, verbose=1, shuffle=False)
 
     def predict(self):
         # Load best found model
