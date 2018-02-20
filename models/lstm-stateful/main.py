@@ -193,7 +193,7 @@ class RNN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('data', 'data-3.0.csv')
+    datapath = os.path.join('..','..','data', 'data_bessaker_advanced.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()
