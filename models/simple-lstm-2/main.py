@@ -14,6 +14,7 @@ from keras.callbacks import EarlyStopping,ModelCheckpoint
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
+from sklearn.decomposition import PCA
 
 class RNN:
 
@@ -29,10 +30,13 @@ class RNN:
 
         self.dataset = self.dataset.dropna()
 
+        print(self.dataset.columns)
+
         self.validsplit = 0.7
         self.testsplit = 0.9
         self.batch_size = 32
         self.epochs = 1000
+        self.PCAcomp = 42
 
         #print(self.dataset)
 
@@ -43,17 +47,23 @@ class RNN:
         self.x_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
         data_x = self.x_scaler.fit_transform(data_x)
 
-        self.dataset.iloc[:,:-1] = data_x
-        self.dataset.iloc[:,-1:] = data_y
-        self.data = self.dataset.values
 
+        #Extract PCA features and reduce the dimensionality
+        data_x = self.extract_PCA_features(data_x,n_components = self.PCAcomp)
+
+
+        # self.dataset.iloc[:,:-1] = data_x
+        # self.dataset.iloc[:,-1:] = data_y
+        # self.data = self.dataset.values
+
+        self.data = np.concatenate((data_x, data_y), axis = 1)
         
         # Number of timesteps we want to look back and on
         # n_in = 6
         # self.data = np.concatenate((data_x, data_y), axis=1)
         
         # Number of timesteps we want to look back and on
-        n_in = 4
+        n_in = 6
         n_out = 1
 
         # Returns an (n_in * n_out) * num_vars NDFrame
@@ -82,6 +92,12 @@ class RNN:
         self.y_train = self.y_data[:split, :,:]
         self.y_test = self.y_data[split:, :, :]
 
+        print('X_train shape: {}'.format(self.x_train.shape))
+        print('y_train shape: {}'.format(self.y_train.shape))
+        print('X_test shape: {}'.format(self.x_test.shape))
+        print('X_test shape: {}'.format(self.y_test.shape))
+     
+
         assert self.x_train.shape[0] % self.batch_size == 0, 'training sample size not divisible by batch size'
         assert self.x_test.shape[0] % self.batch_size == 0, 'testing sample size not divisible by batch size'
 
@@ -101,9 +117,10 @@ class RNN:
         self.model.add(LSTM(32, return_sequences=True,
                                 batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]),
                                 stateful=True))        
+        
         self.model.add(LSTM(32, return_sequences=True))
         
-        self.model.add(TimeDistributed(Dense(1)))
+        self.model.add(Dense(1))
     
         self.model.summary()
 
@@ -114,12 +131,20 @@ class RNN:
         early_stopping = EarlyStopping(monitor='val_loss', patience=50)
 
         # Save the best model each time
-        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+        # checkpoint = ModelCheckpoint('checkpoint_model_two.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+
 
         for i in range(self.epochs):
+
+            # Creates the closest validation splitt divisible by batch size to 0.2
+            samples_split = self.x_train.shape[0]
+            val_split = ((0.2 * samples_split - ((0.2 * samples_split) % self.batch_size))/samples_split)
+
+            # Train model
             self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
-                            callbacks=[checkpoint, early_stopping], validation_split=0.2, shuffle=False)
+                            callbacks=[early_stopping], validation_split=val_split, shuffle=False)
             #Resetting states
+
             self.model.reset_states()
             print('Epoch: %.d' % i)
 
@@ -138,6 +163,16 @@ class RNN:
 
     def rmse(self, y_true, y_pred):
         return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
+
+    def extract_PCA_features(self, data, n_components = 10):
+
+        pca = PCA(n_components=n_components)
+        data_x_pca = pca.fit_transform(data)
+
+        self.pca_model = pca
+
+        return data_x_pca
+
 
     # convert series to supervised learning, time series data generation
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True):
@@ -171,7 +206,7 @@ class RNN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','..','data', 'advanced_data2.csv')
+    datapath = os.path.join('..','..','data', 'Data_advanced.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()
