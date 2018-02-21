@@ -115,28 +115,8 @@ class RNN:
         samples_split = self.x_train.shape[0]
         val_split = ((0.2 * samples_split - ((0.2 * samples_split) % self.batch_size))/samples_split)
 
-<<<<<<< HEAD
-        # Save the best model each time
-        # checkpoint = ModelCheckpoint('checkpoint_model_two.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
-
-
-        for i in range(self.epochs):
-
-            # Creates the closest validation splitt divisible by batch size to 0.2
-            samples_split = self.x_train.shape[0]
-            val_split = ((0.2 * samples_split - ((0.2 * samples_split) % self.batch_size))/samples_split)
-
-            # Train model
-            self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, epochs = 1, verbose=2,
-                            callbacks=[early_stopping], validation_split=val_split, shuffle=False)
-            #Resetting states
-
-            self.model.reset_states()
-            print('Epoch: %.d' % i)
-=======
 
         self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, callbacks=[early_stopping, checkpoint], validation_split=val_split, epochs = self.epochs, verbose=1, shuffle=False)
->>>>>>> fabian_branch
 
     def predict(self):
         # Load best found model
