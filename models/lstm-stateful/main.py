@@ -13,6 +13,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
+from sklearn.decomposition import PCA
 
 # Fix on windows bug from the Nov 2017 update
 import win_unicode_console
@@ -20,6 +21,7 @@ win_unicode_console.enable()
 
 # from tensorflow.python.client import device_lib
 # print(device_lib.list_local_devices())
+
 
 class RNN:
 
@@ -35,9 +37,10 @@ class RNN:
 
         self.dataset = self.dataset.dropna()
 
-        self.testsplit = 0.5
+        self.testsplit = 0.8
         self.batch_size = 32
         self.epochs = 100
+        self.PCAcomp = 30
 
         data_x = self.dataset.iloc[:, :-1]
         data_y = self.dataset.iloc[:, -1:]
@@ -50,9 +53,15 @@ class RNN:
         self.x_scaler = MinMaxScaler(copy=True, feature_range=(0,1))
         data_x = self.x_scaler.fit_transform(data_x)
 
-        self.dataset.iloc[:, :-1] = data_x
-        self.dataset.iloc[:, -1:] = data_y
-        self.data = np.concatenate((data_x, data_y), axis=1)
+        #Extract PCA features and reduce the dimensionality
+        data_x = self.extract_PCA_features(data_x,n_components = self.PCAcomp)
+
+        self.data = np.concatenate((data_x, data_y), axis = 1)
+        print('Data shape after PCA feature construction: {}'.format(self.data.shape))
+        
+        # self.dataset.iloc[:, :-1] = data_x
+        # self.dataset.iloc[:, -1:] = data_y
+        # self.data = np.concatenate((data_x, data_y), axis=1)
 
         # Number of timesteps we want to look back and on
         n_in = 4
@@ -169,6 +178,15 @@ class RNN:
 
     def rmse(self, y_true, y_pred):
         return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
+
+    def extract_PCA_features(self, data, n_components = 10):
+
+        pca = PCA(n_components=n_components)
+        data_x_pca = pca.fit_transform(data)
+
+        self.pca_model = pca
+
+        return data_x_pca
 
     # convert series to supervised learning, time series data generation
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True):
