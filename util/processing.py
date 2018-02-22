@@ -2,9 +2,9 @@ import numpy as np
 
 from pandas import DataFrame, concat
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.decomposition import PCA
 
-
-def process_dataset(dataset, look_back=1, look_ahead=1, testsplit=0.8):
+def process_dataset(dataset, look_back=1, look_ahead=1, testsplit=0.8, pca = False):
     dataset = dataset.fillna(0)
 
     # Assuming target value is the last in the dataset, dropping the two last rows because of missing targets
@@ -17,6 +17,9 @@ def process_dataset(dataset, look_back=1, look_ahead=1, testsplit=0.8):
     #Normalizing data
     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
     data_x = scaler.fit_transform(data_x)
+
+    #Extracting pca features
+    if pca: data_x = extract_PCA_features(data_x,n_components=40)
 
     # Returns an (n_in * n_out) * num_vars NDFrame
     timeseries = series_to_supervised(data=data_x, n_in=look_back, n_out=look_ahead, dropnan=True).values
@@ -89,3 +92,33 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     if dropnan:
         agg.dropna(inplace=True)
     return agg
+
+
+def extract_PCA_features(data, n_components = 10):
+
+    pca = PCA(n_components=n_components)
+    data_x_pca = pca.fit_transform(data)
+
+    return data_x_pca
+
+
+def write_results(file,layers,results,metrics,ahed,back, epochs, optimizer):
+    file.write('\nLayers:\n')
+
+    for i,item in enumerate(layers):
+        file.write("LSTM:{} ".format(item))
+
+    file.write('\nLookback: {} Lookahed: {}'.format(ahed,back))
+
+    file.write('\nOptimizer: ' + optimizer)
+
+    file.write('\nTrained {} epochs\n'.format(epochs))
+    
+    for i,item in enumerate(metrics):
+        file.write(item)
+    file.write('\n')
+
+    for i,item in enumerate(results):
+        file.write(" {} ".format(item))
+
+    file.write('\n')

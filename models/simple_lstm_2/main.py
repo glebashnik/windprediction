@@ -11,6 +11,8 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 import tensorflow as tf
 from keras.regularizers import l2
 
+from keras import optimizers
+
 class RNN:
 
     def __init__(self, batch_size=32, epochs=100):
@@ -24,8 +26,29 @@ class RNN:
         self.model.add(Dense(1))
         self.model.summary()
 
-    def train_network(self, x_train, y_train):
-        self.model.compile(loss='mae', optimizer='adam', metrics=['mae','mse',self.rmse])
+    def build_model_general(self,input_shape, layers):
+
+        self.model = Sequential()
+
+        self.model.add(LSTM(layers[0], return_sequences=True, input_shape=input_shape, 
+        activation='softsign'))
+
+        depth = len(layers)
+
+        if depth >= 3:
+
+            for i in range(depth-2):
+                self.model.add(LSTM(layers[i+1], return_sequences=True, activation='softsign'))
+
+        self.model.add(LSTM(layers[-1], activation='softsign'))
+        self.model.add(Dense(1))
+        self.model.summary()
+
+    def train_network(self, x_train, y_train, lr = 0.01, opt = 'Adam'):
+
+        # opt = optimizers.SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True)
+
+        self.model.compile(loss='mae', optimizer=opt, metrics=['mae','mse',self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=30)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='loss', verbose=0, save_best_only=True, mode='min')
