@@ -19,8 +19,8 @@ class RNN:
 
     def build_model(self, input_shape):
         self.model = Sequential()
-        self.model.add(LSTM(32, return_sequences=True, input_shape=input_shape))
-        self.model.add(LSTM(16))
+        self.model.add(LSTM(64, return_sequences=True, input_shape=input_shape, activation='softsign'))
+        self.model.add(LSTM(32, activation='softsign'))
         self.model.add(Dense(1))
         self.model.summary()
 
