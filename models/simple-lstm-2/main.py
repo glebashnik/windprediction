@@ -63,11 +63,16 @@ class RNN:
         # self.data = np.concatenate((data_x, data_y), axis=1)
         
         # Number of timesteps we want to look back and on
-        n_in = 6
+        n_in = 4
         n_out = 1
+
+        print(self.data[0,:])
+        print()
 
         # Returns an (n_in * n_out) * num_vars NDFrame
         self.timeseries = self.series_to_supervised(data=self.data, n_in=n_in, n_out=n_out, dropnan=True)
+
+        
 
         # Converts to numpy representation
         self.timeseries_np = self.timeseries.values
@@ -75,6 +80,11 @@ class RNN:
         # Reshape to three dimensions (number of samples x number of timesteps x number of variables)
         self.timeseries_data = self.timeseries_np.reshape(self.timeseries_np.shape[0], n_in+n_out ,self.data.shape[1])
 
+        # i = 0
+        # while(True):
+        #     print(self.timeseries_data[i,:,:])
+        #     o=input()
+        #     i += 1
         # Data is everything but the two last rows in the third dimension (which contain the delayed and actual production values)
         self.x_data = self.timeseries_data[:self.timeseries_data.shape[0]-self.timeseries_data.shape[0] % self.batch_size, :,:-2]
         self.y_data = self.timeseries_data[:self.timeseries_data.shape[0]-self.timeseries_data.shape[0] % self.batch_size,:,-1:]
@@ -118,9 +128,9 @@ class RNN:
                                 batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]),
                                 stateful=True))        
         
-        self.model.add(LSTM(32, return_sequences=True))
+        self.model.add(LSTM(16, return_sequences=True))
         
-        self.model.add(Dense(1))
+        self.model.add(TimeDistributed(Dense(1)))
     
         self.model.summary()
 
@@ -206,7 +216,7 @@ class RNN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','..','data', 'Data_advanced.csv')
+    datapath = os.path.join('..','..','data', 'data_bessaker_advanced.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()
