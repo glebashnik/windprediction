@@ -49,7 +49,8 @@ class RNN:
 
 
         #Extract PCA features and reduce the dimensionality
-        data_x = self.extract_PCA_features(data_x,n_components = self.PCAcomp)
+        data_x = self.extract_PCA_fea
+        tures(data_x,n_components = self.PCAcomp)
 
 
         # self.dataset.iloc[:,:-1] = data_x
