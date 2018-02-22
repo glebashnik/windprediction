@@ -34,9 +34,6 @@ def process_dataset(dataset, look_back=1, look_ahead=1, testsplit=0.8):
     y_train = data_y[:split, :]
     y_test = data_y[split:, :]
 
-    print(x_train)
-    print(y_train)
-
     return x_train, x_test, y_train, y_test
 
 def generate_test_set(dataset, look_back=4, look_ahead=0):
