@@ -21,8 +21,8 @@ class RNN:
 
     def build_model(self, input_shape):
         self.model = Sequential()
-        self.model.add(LSTM(64, return_sequences=True, input_shape=input_shape, activation='softsign'))
-        self.model.add(LSTM(32, activation='softsign'))
+        self.model.add(LSTM(16, return_sequences=True, input_shape=input_shape, activation='softsign'))
+        self.model.add(LSTM(8, activation='softsign'))
         self.model.add(Dense(1))
         self.model.summary()
 
@@ -51,7 +51,7 @@ class RNN:
         self.model.compile(loss='mae', optimizer=opt, metrics=['mae','mse',self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=30)
-        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='loss', verbose=0, save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, callbacks=[early_stopping, checkpoint], validation_split=0.2, epochs = self.epochs, verbose=1, shuffle=False)
 
