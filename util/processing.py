@@ -2,30 +2,38 @@ import numpy as np
 
 from pandas import DataFrame, concat
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
 
+# Returns the dataset split into features and target (assuming target is the last index in the DF)
+# Also scales the features into values ranging from 0 to 1
+# ALl returned values are NDArrays
+def feature_target_split(dataset):
+    dataset = dataset.dropna()
 
-def process_dataset(dataset, look_back=1, look_ahead=1, testsplit=0.8):
-    dataset = dataset.fillna(0)
+    data_x = dataset.iloc[:, :-1]
+    data_y = dataset.iloc[:, -1:]
 
-    # Assuming target value is the last in the dataset, dropping the two last rows because of missing targets
-    data_x = dataset.iloc[:-2, :-1]
-
-    # Need to discard the first values because of dropping in time series
-    data_y = dataset.iloc[look_back:-2, -1:].values
-    data_y = data_y.reshape(data_y.shape[0], 1)
-
-    #Normalizing data
     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
     data_x = scaler.fit_transform(data_x)
 
-    # Returns an (n_in * n_out) * num_vars NDFrame
-    timeseries = series_to_supervised(data=data_x, n_in=look_back, n_out=look_ahead, dropnan=True).values
+    return data_x, data_y.values
+
+# Prepares the dataset for use in a dense neural network
+# Splits the dataset into features and target, scales and divides into training and test sets
+# ALl returned values are NDArrays
+def process_dataset_nn(dataset, testsplit=0.8):
+    data_x, data_y = feature_target_split(dataset)
+    return train_test_split(data_x, data_y, test_size=1-testsplit)
+
+# Prepares the dataset for use in an LSTM network
+# Splits the dataset into features and target, creates timeseries based on look-back and look-ahead
+# and splits into training and test sets
+def process_dataset_lstm(dataset, look_back=1, look_ahead=1, testsplit=0.8):
+    data_x, data_y = feature_target_split(dataset)
+    data_y = data_y[look_back:, :]
+    timeseries_data = create_timeseries(data_x, look_back=look_back, look_ahead=look_ahead)
     
-    # Reshape to three dimensions (number of samples x number of timesteps x number of variables)
-    timeseries_data = timeseries.reshape(timeseries.shape[0], look_back + look_ahead, data_x.shape[1])
-    
-    #Split for dividing the dataset in a factor of the batch size
-    split = int(testsplit * data_x.shape[0])
+    split = int(testsplit * timeseries_data.shape[0])
 
     # Create training and test sets
     x_train = timeseries_data[:split, :, :]
@@ -36,56 +44,58 @@ def process_dataset(dataset, look_back=1, look_ahead=1, testsplit=0.8):
 
     return x_train, x_test, y_train, y_test
 
-def generate_test_set(dataset, look_back=4, look_ahead=0):
-    dataset = dataset.fillna(0)
+# Prepares the dataset for use in a stateful LSTM network
+# Splits the dataset into features and target, creates timeseries based on look-back and look-ahead,
+# fits to the current batch size and splits into training and test sets
 
-    #Normalizing data
-    # scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-    # data = scaler.fit_transform(dataset)
-    data = dataset
+# May not work when validation_split in model.fit() is used, due to internal splitting of training set
+# into a number that may not be divisible by the batch size
+def process_dataset_lstm_stateful(dataset, look_back=1, look_ahead=1, testsplit=0.8, batch_size=32):
+    data_x, data_y = feature_target_split(dataset)
 
-    # Returns an (n_in * n_out) * num_vars NDFrame
-    timeseries = series_to_supervised(data=data, n_in=look_back, n_out=look_ahead, dropnan=True)
+    data_y = data_y.reshape(data_y.shape[0], 1)
 
-    # Converts to numpy representation
-    timeseries_np = timeseries.values
-
-    # Reshape to three dimensions (number of samples x number of timesteps x number of variables)
-    return timeseries_np.reshape(timeseries_np.shape[0], look_back + look_ahead, data.shape[1])
-
-def make_time_series(row_features, look_back_num):
-    row_features = row_features.fillna(0).values
-    list_of_matrices = []
-    num_time_steps = look_back_num
-    i = num_time_steps
+    timeseries_data = create_timeseries(data_x, look_back=look_back, look_ahead=look_ahead)
     
-    while i < len(row_features):
-        list_of_matrices.append(row_features[(i-num_time_steps):i,:])
-        i = i + 1
-    return np.array(list_of_matrices).reshape(len(list_of_matrices), 17, look_back_num)
+    #Split for dividing the dataset in a factor of the batch size
+    split = testsplit * timeseries_data.shape[0] 
+    split -= split % batch_size
+    split = int(split)
 
-# convert series to supervised learning, time series data generation
-def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
+    test_split = timeseries_data.shape[0] - split
+    test_split = test_split - test_split % batch_size
+    test_split = int(split + test_split)
+    
+    # Create training and test sets
+    x_train = timeseries_data[:split, :, :]
+    x_test = timeseries_data[split:test_split, :, :]
+
+    y_train = data_y[:split, :]
+    y_test = data_y[split:test_split:, :]
+
+    return x_train, x_test, y_train, y_test
+
+# Creates a timeseries from a DataFrame
+# Returns an (look_back * look_ahead) * num_vars NDFrame
+# Drops the first #look_back rows due to these necessarily having NAN values in the timeseries
+def create_timeseries(data, look_back=1, look_ahead=1, dropnan=True):
     n_vars = 1 if type(data) is list else data.shape[1]
     df = DataFrame(data)
     cols, names = list(), list()
     
-    # input sequence (t-n, ... t-1)
-    for i in range(n_in, 0, -1):
+    for i in range(look_back, 0, -1):
         cols.append(df.shift(i))
         names += [('var%d(t-%d)' % (j + 1, i)) for j in range(n_vars)]
     
-    # forecasting
-    for i in range(0, n_out):
+    for i in range(0, look_ahead):
             cols.append(df.shift(-i))
             if i == 0:
                 names += [('var%d(t)' % (j + 1)) for j in range(n_vars)]
             else:
                 names += [('var%d(t+%d)' % (j + 1, i)) for j in range(n_vars)]
-    # put it all together
+    
     agg = concat(cols, axis=1)
     agg.columns = names
-    # drop rows with NaN values
     if dropnan:
         agg.dropna(inplace=True)
-    return agg
+    return agg.values.reshape(agg.shape[0], look_back + look_ahead, data.shape[1])
