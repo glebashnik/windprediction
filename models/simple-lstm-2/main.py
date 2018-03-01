@@ -40,11 +40,6 @@ class RNN:
         data_x = self.dataset.iloc[:, :-1]
         data_y = self.dataset.iloc[:, -1:]
 
-        
-
-        n_in = 4
-        n_out = 0
-
 
         #Normalizing data
         # self.x_scaler = MinMaxScaler(copy=True, feature_range=(0,1))
@@ -54,13 +49,32 @@ class RNN:
         # self.dataset.iloc[:, -1:] = data_y
         # self.data = np.concatenate((data_x, data_y), axis=1)
 
+        #Extract PCA features and reduce the dimensionality
+        data_x = self.extract_PCA_fea
+        tures(data_x,n_components = self.PCAcomp)
+
+
+        # self.dataset.iloc[:,:-1] = data_x
+        # self.dataset.iloc[:,-1:] = data_y
+        # self.data = self.dataset.values
+
+        self.data = np.concatenate((data_x, data_y), axis = 1)
+        
         # Number of timesteps we want to look back and on
+        # n_in = 6
+        # self.data = np.concatenate((data_x, data_y), axis=1)
+        
+        # Number of timesteps we want to look back and on
+        n_in = 4
+        n_out = 1
 
         # Returns an (n_in * n_out) * num_vars NDFrame
         self.timeseries = self.series_to_supervised(data=data_x, 
                 n_in=n_in, 
                 n_out=n_out,
                 dropnan=True)
+
+        
 
         # Converts to numpy representation
         self.timeseries_np = self.timeseries.values
@@ -71,13 +85,15 @@ class RNN:
 
         # self.timeseries = self.make_time_series(data_x.values, n_in)
 
-        # self.x_data = np.asarray(self.timeseries)
-        self.y_data = data_y.iloc[n_in:].values
 
-
-        print(self.x_data.shape)
-        print(self.y_data.shape)
-        exit(0)
+        # i = 0
+        # while(True):
+        #     print(self.timeseries_data[i,:,:])
+        #     o=input()
+        #     i += 1
+        # Data is everything but the two last rows in the third dimension (which contain the delayed and actual production values)
+        self.x_data = self.timeseries_data[:, :, :-1]
+        self.y_data = self.timeseries_data[:, :, -1:]
 
         #Split for dividing the dataset in a factor of the batch size
         split = int(self.testsplit * self.x_data.shape[0])
@@ -106,7 +122,7 @@ class RNN:
         
         self.model.add(LSTM(16, return_sequences=False))
         
-        self.model.add(Dense(1))
+        self.model.add(TimeDistributed(Dense(1)))
     
         self.model.summary()
 
