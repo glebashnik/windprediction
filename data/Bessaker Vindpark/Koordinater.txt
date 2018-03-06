@@ -9,7 +9,6 @@ Halten Fyr
 Buhulmråsa fyr
 Namsos Lufthavn
 
-
 De fem nærmeste værstasjonene
 63.460	10.931
 63.705	9.611
