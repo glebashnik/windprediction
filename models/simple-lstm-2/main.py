@@ -48,7 +48,6 @@ class RNN:
         self.dataset.iloc[:, -1:] = data_y
         self.data = np.concatenate((data_x, data_y), axis=1)
 
-<<<<<<< HEAD
         #Extract PCA features and reduce the dimensionality
         data_x = self.extract_PCA_fea
         tures(data_x,n_components = self.PCAcomp)
@@ -67,11 +66,6 @@ class RNN:
         # Number of timesteps we want to look back and on
         n_in = 4
         n_out = 1
-=======
-        # Number of timesteps we want to look back and on
-        n_in = 4
-        n_out = 0
->>>>>>> 74523065ad9e1ec75a76abdf3b76e64079c22465
 
         print(self.data[0,:])
         print()

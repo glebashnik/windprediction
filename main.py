@@ -50,8 +50,8 @@ def execute_network(x_train, x_test, y_train, y_test, layers, epochs, opt, optna
 
     nn_network = RNN(batch_size=32, epochs=epochs)
     nn_network.build_model_general((x_train.shape[1], x_train.shape[2]),layers)
-    nn_network.train_network(x_train, y_train,0.01,opt)
-    evaluation, metric_names = nn_network.evaluate(modelpath, x_test, y_test)
+    model = nn_network.train_network(x_train, y_train,0.01,opt)
+    evaluation, metric_names = nn_network.evaluate(model, x_test, y_test, opt)
     write_results(logfile,layers,evaluation,metric_names,look_back,look_ahead, epochs, optname)
 
 

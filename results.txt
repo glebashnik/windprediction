@@ -1,48 +1,80 @@
 
 Layers:
-LSTM:64 LSTM:32 LSTM:16 
+LSTM:32 LSTM:16 
 Lookback: 4 Lookahed: 1
-Optimizer: SGD lr: 0.01 decay: 1e-06 momentum: 0.9 
-Trained 1 epochs
+Optimizer: SGD lr: 0.001 decay: 1e-06 momentum: 0.9 
+Trained 200 epochs
 lossmean_absolute_errormean_squared_errorrmse
- 13.572118795729551  13.572118795729551  278.13447456689033  13.572118561654168 
+ 3.1731235722681705  3.1731235722681705  20.898104633832368  3.173123583240454 
 
 Layers:
-LSTM:128 LSTM:64 LSTM:32 
+LSTM:64 LSTM:32 
 Lookback: 4 Lookahed: 1
-Optimizer: SGD lr: 0.01 decay: 1e-06 momentum: 0.9 
-Trained 1 epochs
+Optimizer: SGD lr: 0.001 decay: 1e-06 momentum: 0.9 
+Trained 200 epochs
 lossmean_absolute_errormean_squared_errorrmse
- 12.441947990044422  12.441947990044422  225.68745774939327  12.441947926039434 
+ 3.0588022864790685  3.0588022864790685  20.284093452665743  3.0588022243027946 
 
 Layers:
-LSTM:20 LSTM:20 LSTM:20 
+LSTM:16 LSTM:16 
 Lookback: 4 Lookahed: 1
-Optimizer: SGD lr: 0.01 decay: 1e-06 momentum: 0.9 
-Trained 1 epochs
+Optimizer: SGD lr: 0.001 decay: 1e-06 momentum: 0.9 
+Trained 200 epochs
 lossmean_absolute_errormean_squared_errorrmse
- 13.83000416632238  13.83000416632238  289.5945265597145  13.830004118775818 
+ 3.0242661401157984  3.0242661401157984  20.17625772964463  3.0242661145138032 
 
 Layers:
-LSTM:64 LSTM:32 LSTM:16 
+LSTM:20 LSTM:20 
 Lookback: 4 Lookahed: 1
-Optimizer: Adam lr: 0.01 decay: 0.9 
-Trained 1 epochs
+Optimizer: SGD lr: 0.001 decay: 1e-06 momentum: 0.9 
+Trained 200 epochs
 lossmean_absolute_errormean_squared_errorrmse
- 17.538560847193718  17.538560847193718  440.3890298932991  17.538560576544054 
+ 3.24508590574804  3.24508590574804  20.60150809758919  3.2450858874609008 
 
 Layers:
-LSTM:128 LSTM:64 LSTM:32 
+LSTM:128 LSTM:64 
 Lookback: 4 Lookahed: 1
-Optimizer: Adam lr: 0.01 decay: 0.9 
-Trained 1 epochs
+Optimizer: SGD lr: 0.001 decay: 1e-06 momentum: 0.9 
+Trained 200 epochs
 lossmean_absolute_errormean_squared_errorrmse
- 14.586356910054544  14.586356910054544  322.18767574672387  14.586356639404881 
+ 3.178574861981839  3.178574861981839  21.37813368419673  3.1785747815184258 
 
 Layers:
-LSTM:20 LSTM:20 LSTM:20 
+LSTM:32 LSTM:16 
 Lookback: 4 Lookahed: 1
-Optimizer: Adam lr: 0.01 decay: 0.9 
-Trained 1 epochs
+Optimizer: Adam lr: 0.001 decay: 0.9 
+Trained 200 epochs
 lossmean_absolute_errormean_squared_errorrmse
- 15.390944587875762  15.390944587875762  355.4451194316977  15.39094450375492 
+ 3.1955234206648595  3.1955234206648595  22.053626402455347  3.195523435294571 
+
+Layers:
+LSTM:64 LSTM:32 
+Lookback: 4 Lookahed: 1
+Optimizer: Adam lr: 0.001 decay: 0.9 
+Trained 200 epochs
+lossmean_absolute_errormean_squared_errorrmse
+ 3.295523902485263  3.295523902485263  24.123074550528084  3.2955238403089893 
+
+Layers:
+LSTM:16 LSTM:16 
+Lookback: 4 Lookahed: 1
+Optimizer: Adam lr: 0.001 decay: 0.9 
+Trained 200 epochs
+lossmean_absolute_errormean_squared_errorrmse
+ 3.077792104344354  3.077792104344354  21.031077792751937  3.0777920714275036 
+
+Layers:
+LSTM:20 LSTM:20 
+Lookback: 4 Lookahed: 1
+Optimizer: Adam lr: 0.001 decay: 0.9 
+Trained 200 epochs
+lossmean_absolute_errormean_squared_errorrmse
+ 3.152153604668373  3.152153604668373  21.828200702356355  3.152153601010945 
+
+Layers:
+LSTM:128 LSTM:64 
+Lookback: 4 Lookahed: 1
+Optimizer: Adam lr: 0.001 decay: 0.9 
+Trained 200 epochs
+lossmean_absolute_errormean_squared_errorrmse
+ 3.215045961529045  3.215045961529045  22.364287274681597  3.2150459505567617 
