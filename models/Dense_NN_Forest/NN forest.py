@@ -61,8 +61,8 @@ from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state = 67)
 
 # # Keras
-import tensorflow as tf
-from tensorflow.contrib.keras import models
+# import tensorflow as tf
+# from tensorflow.contrib.keras import models
 
 
 
@@ -72,7 +72,7 @@ relu_leak = 0.2
 
 
 # #### Sette opp layers
-from tensorflow.contrib.keras import layers
+# from tensorflow.contrib.keras import layers
 
 # dnn_keras_model = models.Sequential()
 # # Input layer
@@ -98,8 +98,8 @@ from tensorflow.contrib.keras import layers
 # # Output Layer
 # dnn_keras_model.add(layers.Dense(1))
 
-from keras.models import Model
-from keras.layers import Input, Dense, LeakyReLU, BatchNormalization, Average
+from keras.models import Model, save_model, load_model
+from keras.layers import Input, Dense, LeakyReLU, BatchNormalization, Average, Dropout
 from keras.regularizers import l2
 
 # a = Input(shape=(num_features,))
@@ -114,9 +114,9 @@ from keras.regularizers import l2
 
 #Creating larger model (using keras model API)
 
-def dense_block(input_data, units, dropout = False, l2 = 0):
+def dense_block(input_data, units, dropout = False, l2_reg = 0):
 
-    x = Dense(units = 16, activation=None, activity_regularizer = l2(l2))(input_data)
+    x = Dense(units = units, activation=None, activity_regularizer = l2(l2_reg))(input_data)
     if dropout: x = Dropout(dropout_rate)(x)
     x = BatchNormalization()(x)
     return LeakyReLU(relu_leak)(x)
@@ -126,33 +126,33 @@ input_layer = Input(shape=(num_features,))
 
 #Hidden model 1
 a = dense_block(input_layer, 32)
-a = dense_block(a, 16)
+a = dense_block(a, 16, True)
 a = dense_block(a, 8)
 a = dense_block(a, 2)
 
 out_1 = Dense(1)(a)
 
 
-b = dense_block(input_layer, 64)
+b = dense_block(input_layer, 128)
 b = dense_block(b, 64, True)
 b = dense_block(b, 32)
 b = dense_block(b, 8)
 
 out_2 = Dense(1)(b)
 
-c = dense_block(input_layer, 64, True)
-c = dense_block(input_layer, 16)
+c = dense_block(input_layer, 64)
+c = dense_block(input_layer, 16, True)
 c = dense_block(input_layer, 6)
 
 out_3 = Dense(1)(c)
 
-d = dense_block(input_layer, 32)
-d = dense_block(d, 32, True)
-d = dense_block(d, 32)
+d = dense_block(input_layer, 16, True)
+d = dense_block(d, 8)
+d = dense_block(d, 8)
 
 out_4 = Dense(1)(d)
 
-out = Average()([out_1, out_2, out_3])
+out = Average()([out_1, out_2, out_3, out_4])
 
 dnn_keras_model = Model(inputs = input_layer, outputs = out)
 dnn_keras_model.summary()
@@ -160,7 +160,7 @@ dnn_keras_model.summary()
 
 
 # #### Kompilere modellen
-from tensorflow.contrib.keras import losses,optimizers,metrics,activations
+# from tensorflow.contrib.keras import losses,optimizers,metrics,activations
 
 # adam_opt = optimizers.Adam(lr=0.0005, decay=0.001)
 #Kompilere - Alternative lossfunctions: mean_squared_error
@@ -168,21 +168,22 @@ dnn_keras_model.compile(optimizer='adam', loss = 'mean_absolute_error')
 
 
 # #### Trene modellen
-from tensorflow.contrib.keras import losses,optimizers,metrics,activations
+# from tensorflow.contrib.keras import losses,optimizers,metrics,activations
 # #### Callbacks og checkpoints
-from tensorflow.contrib.keras import callbacks
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
-early_stopping = callbacks.EarlyStopping(monitor='val_loss', patience=1000)
+early_stopping = EarlyStopping(monitor='val_loss', patience=750)
 
-checkpoint = callbacks.ModelCheckpoint('checkpoint_model_advanced.h5', monitor = 'val_loss', 
+checkpoint = ModelCheckpoint('checkpoint_model_advanced.h5', monitor = 'val_loss', 
                                        verbose = 1, save_best_only= True, mode= 'min')
 
 
 # Trene modellen
 np.random.seed(7)
-dnn_keras_model.fit(X_train,y_train, epochs = 5000, batch_size=128, verbose=2, validation_data=(X_test, y_test),
+dnn_keras_model.fit(X_train,y_train, epochs = 4000, batch_size=128, verbose=2, validation_data=(X_test, y_test),
                    callbacks=[checkpoint,early_stopping])
+
 
 
 # validation_split=0.20
@@ -197,8 +198,7 @@ dnn_keras_model.fit(X_train,y_train, epochs = 5000, batch_size=128, verbose=2, v
 from sklearn import metrics
 #finished_model = dnn_keras_model
 
-finished_model = models.load_model('checkpoint_model_advanced.h5')
-
+finished_model = load_model('checkpoint_model_advanced.h5')
 
 # #### Prediksjon på testsett
 final_preds = finished_model.predict(X_test)
