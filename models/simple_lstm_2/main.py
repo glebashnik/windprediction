@@ -53,12 +53,15 @@ class RNN:
         early_stopping = EarlyStopping(monitor='val_loss', patience=30)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
-        self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, callbacks=[early_stopping, checkpoint], validation_split=0.2, epochs = self.epochs, verbose=1, shuffle=False)
+        self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, callbacks=[early_stopping], validation_split=0.2, epochs = self.epochs, verbose=1, shuffle=False)
 
-    def evaluate(self, model_path, x_test, y_test):
+        return self.model
+
+    def evaluate(self, model, x_test, y_test, opt):
+        self.model = model
         # Load best found model
-        self.model.compile(loss='mae', optimizer='adam', metrics=['mae','mse',self.rmse])
-        self.model.load_weights(model_path)
+        self.model.compile(loss='mae', optimizer=opt, metrics=['mae','mse',self.rmse])
+        # self.model.load_weights(model_path)
 
         evaluation = self.model.evaluate(x_test, y_test, batch_size=self.batch_size)
 

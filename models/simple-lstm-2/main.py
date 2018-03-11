@@ -67,6 +67,12 @@ class RNN:
         # Number of timesteps we want to look back and on
         n_in = 4
         n_out = 1
+<<<<<<< HEAD
+=======
+
+        print(self.data[0,:])
+        print()
+>>>>>>> 7db2ef009e589a5e4de1b02153f75cd63f40e2bb
 
         # Returns an (n_in * n_out) * num_vars NDFrame
         self.timeseries = self.series_to_supervised(data=data_x, 

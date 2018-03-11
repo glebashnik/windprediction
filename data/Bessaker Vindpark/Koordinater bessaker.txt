@@ -1,0 +1,28 @@
+Stormpunkt i sentrum
+64.223353	10.369872
+
+
+Navn:
+Værnes
+Ørlandet
+Halten Fyr
+Buhulmråsa fyr
+Namsos Lufthavn
+
+
+De fem nærmeste værstasjonene
+63.460	10.931
+63.705	9.611
+64.173	9.405
+64.401	10.455
+64.471	11.571
+
+De tilsvarende aromepunktene
+63.47, 10.92
+63.72, 9.61
+64.13, 9.33
+64.40, 10.47
+64.47, 11.56
+
+
+link: https://www.darrinward.com
