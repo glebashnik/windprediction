@@ -27,8 +27,18 @@ class NN:
         self.model.add(Dense(1))
         self.model.summary()
 
-    def train_network(self, x_train, y_train):
-        self.model.compile(loss='mae', optimizer='adam',metrics=['mae','mse',self.rmse])
+    def build_model_general(self, input_dim, layers):
+        self.model = Sequential()
+        self.model.add(Dense(layers[0], input_dim=input_dim, activation='relu'))
+
+        for units in layers[1:]:
+            self.model.add(Dense(units, activation='relu'))
+
+        self.model.add(Dense(1))
+        self.model.summary()
+
+    def train_network(self, x_train, y_train, opt='adam'):
+        self.model.compile(loss='mae', optimizer=opt, metrics=['mae','mse',self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=500)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')

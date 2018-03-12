@@ -29,8 +29,26 @@ class RNN:
         self.model.add(Dense(1))
         self.model.summary()
 
-    def train_network(self, x_train, y_train):
-        self.model.compile(loss='mae', optimizer='adam', metrics=['mae','mse',self.rmse])
+    def build_model_general(self, input_shape, layers):
+        self.model = Sequential()
+        self.model.add(LSTM(layers[0], 
+                            return_sequences=True,
+                            batch_input_shape=(self.batch_size, input_shape[0], input_shape[1]),
+                            stateful=True))
+        
+        for layer in layers[1:-1]:
+            self.model.add(LSTM(layer, return_sequences=True, activation='softsign'))
+
+        self.model.add(LSTM(layers[-1], activation='softsign'))
+        self.model.add(Dense(1))
+        self.model.summary()
+
+    def train_network(self, x_train, y_train, opt = 'Adam', val_size=0.2):
+        self.model.compile(loss='mae', optimizer=opt, metrics=['mae','mse',self.rmse])
+
+        # Find a validation split that works with the batch size
+        data_length = x_train.shape[0]
+        val_split = ((val_size * data_length - ((val_size * data_length) % self.batch_size)) / data_length)
 
         # Self-written early_stopping
         patience = 10
@@ -38,7 +56,7 @@ class RNN:
         best_val_loss = float('inf')
 
         for i in range(self.epochs):
-            log = self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, validation_split=0.2, epochs = 1, verbose=1, shuffle=False)
+            log = self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, validation_split=val_split, epochs = 1, verbose=1, shuffle=False)
             
             # Early stopping
             epochs_since_best += 1

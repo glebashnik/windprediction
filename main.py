@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from util.processing import process_dataset_lstm_stateful, process_dataset_lstm, process_dataset_nn
+from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
 from util.logging import write_results
 
@@ -12,13 +12,17 @@ from models.simple_ann_eirik.main import NN
 from models.Dense_NN_Forest.NN_forest import NN_forest
 
 from keras import optimizers
+from models.random_forest.main import RandomForest
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
+
+
+# datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
 try:
-    dataset = pd.read_csv(datapath, index_col=0, sep=';')
+    dataset = pd.read_csv(datapath, sep=';')
 except:
     print('No data found on: ' + datapath)
     exit(1)
@@ -36,7 +40,7 @@ print('Number of features: {}\n\n'.format(num_features))
 logfile = open('results.txt','w')
 
 testsplit = 0.8
-look_back = 4
+look_back = 6
 look_ahead = 1
 epochs = 5000
 batch_size= 64
@@ -44,14 +48,25 @@ lr = 0.001
 decay = 1e-6
 momentum=0.9
 
+
+#Dense 
+x_train, x_test, y_train, y_test = process_dataset_nn(
+    dataset, 
+    testsplit=testsplit
+)
+
 opt = [
-    optimizers.SGD(lr=lr, decay=decay, momentum=momentum, nesterov=True),
-    optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0)
+    #optimizers.SGD(lr=lr, decay=decay, momentum=momentum, nesterov=True),
+    #optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.0),
+    #'rmsprop',
+    'adam'
 ]
 
 opt_name = [
-    'SGD lr: {} decay: {} momentum: {} '.format(lr,decay,momentum),
-    'Adam lr: {} decay: {} '.format(lr,momentum)
+    #'SGD lr: {} decay: {} momentum: {} '.format(lr,decay,momentum),
+    #'Adam lr: {} decay: {} '.format(lr,momentum),
+    #'rmsprop',
+    'adam'
 ]
 
 layers =[
@@ -96,5 +111,10 @@ for model in layers:
         print('Network executed')
 
 
+# for i, opt in enumerate(opt):
+#     for layer_set in layers:
+#         execute_network(x_train, x_test, y_train, y_test, batch_size, layer_set, epochs, opt, opt_name[i])
 
-logfile.close()
+# model = RandomForest()
+# model.train(x_train, y_train)
+# print(model.predict(x_test, y_test))
