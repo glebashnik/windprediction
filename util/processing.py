@@ -13,8 +13,6 @@ def feature_target_split(dataset):
 
     data_x = dataset.iloc[:, :-1]
     data_y = dataset.iloc[:, -1:]
-    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-    data_x = scaler.fit_transform(data_x)
 
     return data_x, data_y.values
 
@@ -25,7 +23,15 @@ def feature_target_split(dataset):
 def process_dataset_nn(dataset, testsplit=0.8, pca=False):
     data_x, data_y = feature_target_split(dataset)
     if pca: data_x = extract_PCA_features(data_x,n_components=40)
-    return train_test_split(data_x, data_y, test_size=1-testsplit)
+    x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=1-testsplit)
+
+    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+    scaler.fit(x_train)
+    x_train = scaler.transform(x_train)
+    x_test = scaler.transform(x_test)
+
+    return x_train, x_test, y_train, y_test
+
 
 # Prepares the dataset for use in an LSTM network
 # Splits the dataset into features and target, creates timeseries based on look-back and look-ahead

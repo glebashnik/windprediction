@@ -30,7 +30,7 @@ class NN:
     def build_model_general(self, input_dim, layers):
         self.model = Sequential()
         self.model.add(Dense(layers[0], input_dim=input_dim, activation='relu'))
-        
+
         for units in layers[1:]:
             self.model.add(Dense(units, activation='relu'))
 
