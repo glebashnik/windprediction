@@ -1,8 +1,0 @@
-
-NN_forest:
-
-Optimizer: adam
-Dropoutrate: 0.3
-Trained 5000 epochs
-  loss  mean_absolute_error  mean_squared_error  rmse
- 1.4464752649586734  1.4464752649586734  5.212018422418511  1.4464752649586734 

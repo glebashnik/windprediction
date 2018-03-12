@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
 from util.logging import write_results
+from data.dataset_generator import generate_bessaker_dataset, generate_skomaker_dataset
 
 from models.simple_lstm.main import RNN as LSTM
 from models.lstm_stateful.main import RNN as StatefulLSTM
@@ -14,26 +15,17 @@ from models.Dense_NN_Forest.NN_forest import NN_forest
 from keras import optimizers
 from models.random_forest.main import RandomForest
 
-# datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
-datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-
-
-# datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
+tek_path = os.path.join('data', 'vindkraft 130717-160218 TEK met.csv')
+arome_path = os.path.join('data', 'vindkraft 130717-160218 arome korr winddir.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
-try:
-    dataset = pd.read_csv(datapath, sep=';')
-except:
-    print('No data found on: ' + datapath)
-    exit(1)
-
-
+dataset = generate_bessaker_dataset(tek_path, arome_path)
 
 num_features = len(dataset.columns) -1
 x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=0.7)
 
 print('Beginning model training on the path:')
-print(datapath)
+print(modelpath)
 print('Number of features: {}\n\n'.format(num_features))
 
 #Hyperparameters for training network
