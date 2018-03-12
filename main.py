@@ -13,7 +13,8 @@ from models.Dense_NN_Forest.NN_forest import NN_forest
 
 from keras import optimizers
 
-datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
+# datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
+datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
 try:
@@ -22,8 +23,14 @@ except:
     print('No data found on: ' + datapath)
     exit(1)
 
+
+
 num_features = len(dataset.columns) -1
-x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=0.8)
+x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=0.7)
+
+print('Beginning model training on the path:')
+print(datapath)
+print('Number of features: {}\n\n'.format(num_features))
 
 #Hyperparameters for training network
 logfile = open('results.txt','w')
@@ -66,12 +73,18 @@ def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrat
 
     nn_network.build_model(input_dim=num_features,model_structure=layers)
 
-    nn_network.train_network(x_train=x_train, y_train=y_train,opt=opt)
+    # nn_network.visualize_model()
     
+
+    nn_network.train_network(x_train=x_train, y_train=y_train,opt=opt)
+    print('training finished')
     
     evaluation, metric_names = nn_network.evaluate(modelpath, x_test, y_test)
     write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
 
+
+execute_network(x_train, x_test, y_train, y_test, layers[0], epochs, 0.3)
+exit(0)
 
 
 for model in layers:

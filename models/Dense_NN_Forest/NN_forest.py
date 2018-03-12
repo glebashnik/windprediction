@@ -39,7 +39,7 @@ class NN_forest:
         out_avg = Average()(network_list)
 
         self.model = Model(inputs = input_layer, outputs = out_avg)
-        self.model.summary()
+        # self.model.summary()
 
 
 
@@ -65,6 +65,10 @@ class NN_forest:
         
         evaluation = self.model.evaluate(x_test, y_test)
         return evaluation, self.model.metrics_names
+
+    def visualize_model(self):
+        from keras.utils import plot_model
+        plot_model(self.model, to_file='model_architecture.png')
 
     #RMSE loss function (missing in keras library)
     def rmse_numpy(self, y_true, y_pred):
