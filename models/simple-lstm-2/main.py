@@ -40,30 +40,63 @@ class RNN:
         data_x = self.dataset.iloc[:, :-1]
         data_y = self.dataset.iloc[:, -1:]
 
+
         #Normalizing data
-        self.x_scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-        data_x = self.x_scaler.fit_transform(data_x)
+        # self.x_scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+        # data_x = self.x_scaler.fit_transform(data_x)
 
-        self.dataset.iloc[:, :-1] = data_x
-        self.dataset.iloc[:, -1:] = data_y
-        self.data = np.concatenate((data_x, data_y), axis=1)
+        # self.dataset.iloc[:, :-1] = data_x
+        # self.dataset.iloc[:, -1:] = data_y
+        # self.data = np.concatenate((data_x, data_y), axis=1)
 
+        #Extract PCA features and reduce the dimensionality
+        data_x = self.extract_PCA_fea
+        tures(data_x,n_components = self.PCAcomp)
+
+
+        # self.dataset.iloc[:,:-1] = data_x
+        # self.dataset.iloc[:,-1:] = data_y
+        # self.data = self.dataset.values
+
+        self.data = np.concatenate((data_x, data_y), axis = 1)
+        
+        # Number of timesteps we want to look back and on
+        # n_in = 6
+        # self.data = np.concatenate((data_x, data_y), axis=1)
+        
         # Number of timesteps we want to look back and on
         n_in = 4
-        n_out = 0
+        n_out = 1
+<<<<<<< HEAD
+=======
+
+        print(self.data[0,:])
+        print()
+>>>>>>> 7db2ef009e589a5e4de1b02153f75cd63f40e2bb
 
         # Returns an (n_in * n_out) * num_vars NDFrame
-        self.timeseries = self.series_to_supervised(data=self.data, 
+        self.timeseries = self.series_to_supervised(data=data_x, 
                 n_in=n_in, 
                 n_out=n_out,
                 dropnan=True)
+
+        
 
         # Converts to numpy representation
         self.timeseries_np = self.timeseries.values
 
         # Reshape to three dimensions (number of samples x number of timesteps x number of variables)
-        self.timeseries_data = self.timeseries_np.reshape(self.timeseries_np.shape[0], n_in+n_out ,self.data.shape[1])
+        self.timeseries_data = self.timeseries_np.reshape(self.timeseries_np.shape[0], n_in+n_out ,data_x.shape[1])
+        self.x_data = self.timeseries_data
 
+        # self.timeseries = self.make_time_series(data_x.values, n_in)
+
+
+        # i = 0
+        # while(True):
+        #     print(self.timeseries_data[i,:,:])
+        #     o=input()
+        #     i += 1
         # Data is everything but the two last rows in the third dimension (which contain the delayed and actual production values)
         self.x_data = self.timeseries_data[:, :, :-1]
         self.y_data = self.timeseries_data[:, :, -1:]
@@ -76,8 +109,8 @@ class RNN:
         self.x_test = self.x_data[split:, :, :]
 
         # Create training and test sets for y
-        self.y_train = self.y_data[:split, :,:]
-        self.y_test = self.y_data[split:, :, :]
+        self.y_train = self.y_data[:split, :]
+        self.y_test = self.y_data[split:, :]
 
         print('X_train shape: {}'.format(self.x_train.shape))
         print('y_train shape: {}'.format(self.y_train.shape))
@@ -85,23 +118,17 @@ class RNN:
         print('X_test shape: {}'.format(self.y_test.shape))
      
 
-        assert self.x_train.shape[0] % self.batch_size == 0, 'training sample size not divisible by batch size'
-        assert self.x_test.shape[0] % self.batch_size == 0, 'testing sample size not divisible by batch size'
+        # assert self.x_train.shape[0] % self.batch_size == 0, 'training sample size not divisible by batch size'
+        # assert self.x_test.shape[0] % self.batch_size == 0, 'testing sample size not divisible by batch size'
 
     def build_model(self):
         self.model = Sequential()
 
         self.model.add(LSTM(32, return_sequences=True, input_shape=(self.x_train.shape[1], self.x_train.shape[2])))
-
-
-        # BEST MODEL THUS FAR: (N_IN = 6, N_OUT = 1, split=0.9, patience=40)
-        self.model.add(LSTM(32, return_sequences=True,
-                                batch_input_shape=(self.batch_size, self.x_train.shape[1], self.x_train.shape[2]),
-                                stateful=True))        
         
-        self.model.add(LSTM(16, return_sequences=True))
+        self.model.add(LSTM(16, return_sequences=False))
         
-        self.model.add(Dense(1))
+        self.model.add(TimeDistributed(Dense(1)))
     
         self.model.summary()
 
@@ -116,7 +143,7 @@ class RNN:
         val_split = ((0.2 * samples_split - ((0.2 * samples_split) % self.batch_size))/samples_split)
 
 
-        self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, callbacks=[early_stopping, checkpoint], validation_split=val_split, epochs = self.epochs, verbose=1, shuffle=False)
+        self.model.fit(x=self.x_train, y=self.y_train, batch_size=self.batch_size, validation_split=val_split, epochs = self.epochs, verbose=2, shuffle=False)
 
     def predict(self):
         # Load best found model
@@ -147,6 +174,20 @@ class RNN:
 
         return data_x_pca
 
+    # Function for making time series
+    def make_time_series(self, row_features, look_back_num):
+        list_of_matrices = []
+        
+        num_time_steps = look_back_num + 1
+        
+        i = num_time_steps
+        
+        while i < len(row_features):
+            list_of_matrices.append(row_features[(i-num_time_steps):i,:])
+            
+            i = i + 1
+        
+        return list_of_matrices
 
     # convert series to supervised learning, time series data generation
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True):
@@ -178,7 +219,7 @@ class RNN:
         pyplot.show()
 
 if __name__ == '__main__':
-    datapath = os.path.join('..','..','data', 'Data_advanced.csv')
+    datapath = os.path.join('..','..','data','Bessaker Vindpark', 'data_bessaker_advanced.csv')
 
     nn_network = RNN(datapath)
     nn_network.build_model()
