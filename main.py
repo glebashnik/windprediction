@@ -29,8 +29,6 @@ print(modelpath)
 print('Number of features: {}\n\n'.format(num_features))
 
 #Hyperparameters for training network
-logfile = open('results.txt','w')
-
 testsplit = 0.8
 look_back = 6
 look_ahead = 1
