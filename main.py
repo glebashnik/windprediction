@@ -6,9 +6,9 @@ from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
 from util.logging import write_results
 
-from models.simple_lstm_2.main import RNN as LSTM
+from models.simple_lstm.main import RNN as LSTM
 from models.lstm_stateful.main import RNN as StatefulLSTM
-from models.simple_ann_eirik.main import NN
+from models.simple_ann.main import NN
 from models.Dense_NN_Forest.NN_forest import NN_forest
 
 from keras import optimizers
