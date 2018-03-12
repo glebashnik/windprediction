@@ -9,13 +9,15 @@ from util.logging import write_results
 from models.simple_lstm.main import RNN as LSTM
 from models.lstm_stateful.main import RNN as StatefulLSTM
 from models.simple_ann.main import NN
-from models.Dense_NN_Forest.NN_forest import NN_forest
+from models.dense_nn_forest.NN_forest import NN_forest
+from models.ann_error_feedback.ann_feedback import NN_feedback
 
 from keras import optimizers
 from models.random_forest.main import RandomForest
 
-# datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
-datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
+datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
+# datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
+# datapath = os.path.join('data','Bessaker', 'data_bessaker_advanced.csv')
 
 
 # datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
@@ -81,6 +83,8 @@ layers =[
     [(69,False),(128,True),(32,False),(4,False)]],
     ]
 
+feedback_network = [(32,False),(16,True),(8,False),(2,False)]
+
 dropouts = [0.2, 0.3, 0.4, 0.5]
 
 def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
@@ -89,8 +93,6 @@ def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrat
     nn_network.build_model(input_dim=num_features,model_structure=layers)
 
     # nn_network.visualize_model()
-    
-
     nn_network.train_network(x_train=x_train, y_train=y_train,opt=opt)
     print('training finished')
     
@@ -98,7 +100,19 @@ def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrat
     write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
 
 
-execute_network(x_train, x_test, y_train, y_test, layers[0], epochs, 0.3)
+def execute_network_NN_feedback(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
+    network = NN_feedback(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
+
+    network.build_model(input_dim=num_features,model_structure=layers)
+    # network.visualize_model()
+    network.train_network(x_train=x_train, y_train=y_train,opt=opt)
+    print('training finished')
+    
+    evaluation, metric_names = network.evaluate(modelpath, x_test, y_test)
+    write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
+
+
+execute_network_NN_feedback(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
 exit(0)
 
 
