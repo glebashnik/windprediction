@@ -33,42 +33,26 @@ class NN_feedback:
         self.relu_leak = 0.2
 
     # Build n networks and averages the final dense output
-    def build_feedback_model(self, input_dim, model_structure):
+    def build_feedback_model(self, input_dim, num_windmills, model_structure):
         input_layer = Input(shape=(input_dim,))
 
-        error = Input(shape=(1,))
+        x1 = self.dense_block(input_layer, 64, False, 0)
+        x2 = self.dense_block(x1, 32, False, 0)
+        x3 = self.dense_block(x2, 16, False, 0)
+        x4 = self.dense_block(x3, 8, False, 0)
+        x5 = self.dense_block(x4, 2, False, 0)
 
-        x = self.dense_block(input_layer, 64, False, 0)
-        x = self.dense_block(x, 32, False, 0)
-        x = self.dense_block(x, 16, False, 0)
-        x = self.dense_block(x, 8, False, 0)
+        single_prod = Dense(num_windmills)(x3)
 
-        x = Concatenate()([x, error])
-
-        x = self.dense_block(x, 2, False, 0)
         # for layer in model_structure[1:]:
 
         #     if layer[0] != 0:
         #         x = self.dense_block(input_data = x, units = layer[0], dropout = layer[1])
 
-        out = Dense(1)(x)
+        total = Dense(1)(x5)
 
-        self.model = Model(inputs=[input_layer, error], outputs=out)
+        self.model = Model(inputs=input_layer, outputs=[total, single_prod])
         # self.model.summary()
-
-    def build_simple_model(self, input_dim, model_structure):
-        input_layer = Input(shape=(input_dim,))
-
-        # x = self.dense_block(input_layer, 64, False, 0)
-        x = self.dense_block(input_layer, 32, False, 0)
-        x = self.dense_block(x, 16, False, 0)
-        x = self.dense_block(x, 8, False, 0)
-        x = self.dense_block(x, 2, False, 0)
-
-        out = Dense(1)(x)
-
-        self.model = Model(inputs=input_layer, outputs=out)
-        self.model.summary()
 
     def dense_block(self, input_data, units, dropout=False, l2_reg=0):
 
@@ -79,8 +63,8 @@ class NN_feedback:
         x = BatchNormalization()(x)
         return LeakyReLU(self.relu_leak)(x)
 
-    def train_network(self, x_train, y_train, opt='adam'):
-        self.model.compile(loss='mae', optimizer=opt,
+    def train_network(self, x_train, y_train, y_train_vector, opt='adam', validation_split=0.15):
+        self.model.compile(loss=['mae', 'binary_crossentropy'], optimizer=opt,
                            metrics=['mae', 'mse', self.rmse])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=500)
@@ -88,43 +72,8 @@ class NN_feedback:
             'checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
-        num_samples = x_train.shape[0]
 
-        epoch_loss = []
-
-        for epoch in range(self.epochs):
-
-            pred_error = np.zeros(self.batch_size)
-
-            batch_loss = []
-
-            for batch_i in range(0, num_samples, self.batch_size):
-
-                # Generator that returns random batch, iterates indefinitely with batch size as step size
-                x_batch, y_batch = next(
-                    gen_batch(x_train, y_train, self.batch_size))
-
-                # Training model on current batch
-                # loss = self.model.train_on_batch([x_batch, pred_error], y_batch)
-                loss = self.model.train_on_batch(x_batch, y_batch)
-                batch_loss.append(loss)
-
-                # Generating predictions for current batch
-                batch_pred = self.model.predict(x_batch)
-
-                # Prediction error on current batch for feedback
-                pred_error = y_batch - batch_pred
-
-            avg_epoch_loss = np.average(batch_loss)
-
-            epoch_loss.append(avg_epoch_loss)
-
-        training_loss = np.average(epoch_loss)
-
-        print(error_init.shape)
-        exit(0)
-
-        self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, validation_split=0.2, callbacks=[
+        self.model.fit(x=x_train, y=[y_train, y_train_vector], batch_size=self.batch_size, validation_split=validation_split, callbacks=[
                        early_stopping, checkpoint], epochs=self.epochs, verbose=2, shuffle=True)
 
     def evaluate(self, model_path, x_test, y_test):

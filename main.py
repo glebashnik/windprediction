@@ -103,7 +103,9 @@ def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrat
 def execute_network_NN_feedback(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
     network = NN_feedback(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
 
-    network.build_model(input_dim=num_features,model_structure=layers)
+    # network.build_model(input_dim=num_features,model_structure=layers)
+    network.build_simple_model(input_dim=num_features,model_structure=layers)
+    
     # network.visualize_model()
     network.train_network(x_train=x_train, y_train=y_train,opt=opt)
     print('training finished')
