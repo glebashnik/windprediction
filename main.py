@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import time
+import datatime
 
 from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
@@ -16,17 +18,8 @@ from models.ann_error_feedback.ann_feedback import NN_feedback
 from keras import optimizers
 from models.random_forest.main import RandomForest
 
-<<<<<<< HEAD
-datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
-# datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-# datapath = os.path.join('data','Bessaker', 'data_bessaker_advanced.csv')
-
-
-# datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
-=======
 tek_path = os.path.join('data', 'vindkraft 130717-160218 TEK met.csv')
 arome_path = os.path.join('data', 'vindkraft 130717-160218 arome korr winddir.csv')
->>>>>>> b71e126a1ac5953fbfa19fc248426178dcf0edd9
 modelpath = os.path.join('checkpoint_model.h5')
 
 dataset = generate_bessaker_dataset(tek_path, arome_path)
@@ -79,11 +72,15 @@ layers =[
     [(64,False),(64,True),(32,False),(16,False)],
     [(12,False),(6,True),(3,False),(0,False)],
     [(69,False),(128,True),(32,False),(4,False)]],
-    ]
+]
 
 feedback_network = [(32,False),(16,True),(8,False),(2,False)]
 
 dropouts = [0.2, 0.3, 0.4, 0.5]
+
+ts = time.time()
+st = datetime.datetime.fromtimestamp(ts).strftime('M%m-D%d_h%H-m%M-s%S')
+logfile = open('results_{}.txt'.format(st),'w')
 
 def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
     nn_network = NN_forest(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
