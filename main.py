@@ -15,7 +15,7 @@ from models.simple_ann.main import NN
 from models.dense_nn_forest.NN_forest import NN_forest
 from models.ann_error_feedback.ann_feedback import NN_feedback
 
-from keras import optimizers
+# from keras import optimizers
 from models.random_forest.main import RandomForest
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -24,14 +24,14 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
 datapath = os.path.join('data','Bessaker Vindpark', 'data_bessaker_advanced.csv')
 
-tek_path = os.path.join('data', 'vindkraft 130717-160218 TEK met.csv')
-arome_path = os.path.join('data', 'vindkraft 130717-160218 arome korr winddir.csv')
+tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
+arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
 # datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
-dataset = generate_bessaker_dataset(tek_path, arome_path)
+dataset = generate_bessaker_dataset_extra(tek_path, arome_path)
 
 print(dataset.head())
 exit(0)
