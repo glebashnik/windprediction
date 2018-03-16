@@ -1,4 +1,4 @@
-
+Ytre Vinka
 NN_forest:
 
     [[(32,False),(16,True),(8,False),(2,False)],
