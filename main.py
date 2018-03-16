@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
-import datatime
+import datetime
 
 from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
@@ -24,11 +24,17 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
 datapath = os.path.join('data','Bessaker Vindpark', 'data_bessaker_advanced.csv')
 
+tek_path = os.path.join('data', 'vindkraft 130717-160218 TEK met.csv')
+arome_path = os.path.join('data', 'vindkraft 130717-160218 arome korr winddir.csv')
+modelpath = os.path.join('checkpoint_model.h5')
 
 # datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
 dataset = generate_bessaker_dataset(tek_path, arome_path)
+
+print(dataset.head())
+exit(0)
 
 num_features = len(dataset.columns) -1
 x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=0.7)

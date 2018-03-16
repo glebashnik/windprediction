@@ -46,6 +46,9 @@ def generate_skomaker_dataset():
         df_tek['SKOM-Skomakerfj.-GS-T4015A3 -0104'].shift(-2).rename('Target', inplace=True),
     ], axis=1).iloc[:-2,:]
 
+#def generate_bessaker_dataset(tek_path, arome_path):
+
+
 def generate_bessaker_dataset(tek_path, arome_path):
     try:
         df_tek = pd.read_csv(tek_path, sep=';', header=0, decimal=',', low_memory=False)
@@ -55,7 +58,9 @@ def generate_bessaker_dataset(tek_path, arome_path):
         exit(1)    
 
     return pd.concat([
+        # Single prod
         df_tek.filter(regex='BESS-Bessakerfj.*-0104', axis=1),
+        #Nacelle
         df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
 
         df_arome.filter(like='6421_1035').shift(-2),
@@ -82,9 +87,15 @@ def generate_bessaker_dataset(tek_path, arome_path):
         df_tek['DNMI_72580...........T0015A3-0120'],
         df_arome['/arome_windvel_6447_1156'],
         
+        # Storm vind måling
         df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
+
+        # Wind error pred
+        df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1) - df_tek.filter(like='STORM-Bess', axis=1),
+        
         
         #Sum produksjon
         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(-2).rename('Target', inplace=True),
+
     ], axis=1).iloc[:-2,:]
