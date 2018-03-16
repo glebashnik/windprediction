@@ -1,10 +1,13 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import time
+import datatime
 
 from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
 from util.logging import write_results
+from data.dataset_generator import generate_bessaker_dataset, generate_skomaker_dataset
 
 from models.simple_lstm.main import RNN as LSTM
 from models.lstm_stateful.main import RNN as StatefulLSTM
@@ -25,24 +28,16 @@ datapath = os.path.join('data','Bessaker Vindpark', 'data_bessaker_advanced.csv'
 # datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
-try:
-    dataset = pd.read_csv(datapath, sep=';')
-except:
-    print('No data found on: ' + datapath)
-    exit(1)
-
-
+dataset = generate_bessaker_dataset(tek_path, arome_path)
 
 num_features = len(dataset.columns) -1
 x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=0.7)
 
 print('Beginning model training on the path:')
-print(datapath)
+print(modelpath)
 print('Number of features: {}\n\n'.format(num_features))
 
 #Hyperparameters for training network
-logfile = open('results.txt','w')
-
 testsplit = 0.8
 look_back = 6
 look_ahead = 1
@@ -84,10 +79,14 @@ layers =[
     [(64,False),(64,True),(32,False),(16,False)],
     [(12,False),(6,True),(3,False),(0,False)],
     [(69,False),(128,True),(32,False),(4,False)]],
-    ]
+]
 
 feedback_network = [(32,False),(16,True),(8,False),(2,False)]
 dropouts = [0.2, 0.3, 0.4, 0.5]
+
+ts = time.time()
+st = datetime.datetime.fromtimestamp(ts).strftime('M%m-D%d_h%H-m%M-s%S')
+logfile = open('results_{}.txt'.format(st),'w')
 
 def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
     nn_network = NN_forest(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
