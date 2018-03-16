@@ -93,6 +93,8 @@ class NN_feedback:
         # Train the model
         num_samples = x_train.shape[0]
 
+        print('Batch size: {}'.format(self.batch_size))
+
         loss_history = []
 
         for epoch in range(self.epochs):
@@ -130,7 +132,7 @@ class NN_feedback:
             loss_history.append(avg_epoch_loss)
             
             print('')
-            print('Epoch {}/{}, Time: {0:.2g}, loss: {}'.format(epoch + 1, self.epochs, time.time() - start, avg_epoch_loss))
+            print('Epoch {}/{}, Time: {0:.2g}, loss: {}\n'.format(epoch + 1, self.epochs, time.time() - start, avg_epoch_loss))
 
 
         exit(0)
