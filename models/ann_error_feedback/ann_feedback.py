@@ -16,8 +16,6 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
 from keras.utils import generic_utils as keras_generic_utils
 
-
-
 def gen_batch(X1, X2, batch_size):
 
     while True:
@@ -84,7 +82,7 @@ class NN_feedback:
 
     def train_network(self, x_train, y_train, opt='adam'):
         self.model.compile(loss='mae', optimizer=opt,
-                           metrics=['mae', 'mse', self.rmse])
+                           metrics=['mae'])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=500)
         checkpoint = ModelCheckpoint(
@@ -101,7 +99,7 @@ class NN_feedback:
 
             #Initialization for beginning of epoch
             pred_error = np.zeros(self.batch_size)
-            progbar = keras_generic_utils.Progbar(num_samples)
+            # progbar = keras_generic_utils.Progbar(num_samples)
             start = time.time()
             
 
@@ -117,32 +115,27 @@ class NN_feedback:
                 # loss = self.model.train_on_batch([x_batch, pred_error], y_batch)
                 loss = self.model.train_on_batch(x_batch, y_batch)
                 batch_losses.append(loss)
-
                 # Generating predictions for current batch
                 batch_pred = self.model.predict(x_batch)
 
                 # Prediction error on current batch for feedback
                 pred_error = y_batch - batch_pred
 
-                #Update progressionbar
-                progbar.add(self.batch_size, values=[("loss", loss)])
+                #Update progressionbar (doesnt work on Linux..??)
+                # progbar.add(self.batch_size, values=[("loss", loss)])
+                
 
             #Calculate avg loss for epoch
-            avg_epoch_loss = np.average(batch_losses)
+            avg_epoch_loss = np.average(np.asarray(batch_losses).shape,axis=0)
             loss_history.append(avg_epoch_loss)
             
             print('')
-            print('Epoch {}/{}, Time: {0:.2g}, loss: {}\n'.format(epoch + 1, self.epochs, time.time() - start, avg_epoch_loss))
+            print('Epoch {}/{}, Time: {}, loss: {}\n'.format(epoch + 1, self.epochs, int(time.time() - start), avg_epoch_loss))
 
-
-        exit(0)
-
-        self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, validation_split=0.2, callbacks=[
-                       early_stopping, checkpoint], epochs=self.epochs, verbose=2, shuffle=True)
 
     def evaluate(self, model_path, x_test, y_test):
         self.model.compile(loss='mae', optimizer='adam',
-                           metrics=['mae', 'mse', self.rmse])
+                           metrics=['mae'])
         self.model.load_weights(model_path)
 
         evaluation = self.model.evaluate(x_test, y_test)

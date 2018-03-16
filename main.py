@@ -15,6 +15,8 @@ from models.ann_error_feedback.ann_feedback import NN_feedback
 from keras import optimizers
 from models.random_forest.main import RandomForest
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+
 datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
 # datapath = os.path.join('data','Bessaker', 'data_bessaker_advanced.csv')
@@ -100,12 +102,22 @@ def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrat
     write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
 
 
-def execute_network_NN_feedback(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
+def execute_network_simple(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
     
     network = NN_feedback(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
-
-    # network.build_model(input_dim=num_features,model_structure=layers)
     network.build_simple_model(input_dim=num_features,model_structure=layers)
+    
+    network.train_network(x_train=x_train, y_train=y_train,opt=opt)
+    print('training finished')
+    
+    evaluation, metric_names = network.evaluate(modelpath, x_test, y_test)
+    write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
+
+
+def execute_network_feedback(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
+    
+    network = NN_feedback(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
+    network.build_model(input_dim=num_features,model_structure=layers)
     
     # network.visualize_model()
     network.train_network(x_train=x_train, y_train=y_train,opt=opt)
@@ -115,8 +127,10 @@ def execute_network_NN_feedback(x_train, x_test, y_train, y_test, layers, epochs
     write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
 
 
-execute_network_NN_feedback(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
+execute_network_simple(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
 exit(0)
+
+execute_network_feedback(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
 
 
 for model in layers:
