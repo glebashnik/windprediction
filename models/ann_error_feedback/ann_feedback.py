@@ -4,6 +4,7 @@ from matplotlib import pyplot
 import os
 import _pickle as pickle
 import numpy as np
+import time
 
 from sklearn.model_selection import train_test_split, KFold
 from keras import backend as K
@@ -13,6 +14,8 @@ from keras import optimizers
 from keras.callbacks import EarlyStopping,ModelCheckpoint
 from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
+from keras.utils import generic_utils as keras_generic_utils
+
 
 
 def gen_batch(X1, X2, batch_size):
@@ -25,8 +28,8 @@ def gen_batch(X1, X2, batch_size):
 
 class NN_feedback:
 
-    def __init__(self, batch_size=32, epochs=1000, dropoutrate = 0.3):
-        self.batch_size = batch_size
+    def __init__(self, batch_size=1, epochs=1000, dropoutrate = 0.3):
+        self.batch_size = 2
         self.epochs = epochs
         self.dropout_rate = dropoutrate
         self.relu_leak = 0.2
@@ -41,9 +44,11 @@ class NN_feedback:
         x = self.dense_block(input_layer, 64, False, 0)
         x = self.dense_block(input_layer, 32, False, 0)
         x = self.dense_block(input_layer, 16, False, 0)
-        x = self.dense_block(input_layer, 8, False, 0)
-
-        x = Concatenate()([x,error])
+        
+        x = Dense(units = 8, activation=None)(x)
+        # x = Concatenate()([x,error])
+        x = BatchNormalization()(x)
+        x = LeakyReLU(self.relu_leak)(x)
 
         x = self.dense_block(input_layer, 2, False, 0)
         # for layer in model_structure[1:]:
@@ -65,20 +70,29 @@ class NN_feedback:
         return LeakyReLU(self.relu_leak)(x)
 
     def train_network(self, x_train, y_train, opt='adam'):
-        self.model.compile(loss='mae', optimizer=opt,metrics=['mae','mse',self.rmse])
+        self.model.compile(loss='mae', optimizer=opt,metrics=['mae'])
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=500)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
+
+        #TODO
+
+        #Get base net to base level
+        #Solve the batch delay issue
+        #Try with larger batch sizes
+        
         num_samples = x_train.shape[0]
-
-
+        
         epoch_loss = []
 
         for epoch in range(self.epochs):
 
+            #Initialization for beginning of epoch
             pred_error = np.zeros(self.batch_size)
+            progbar = keras_generic_utils.Progbar(num_samples)
+            start = time.time()
             
             batch_loss = []
 
@@ -94,30 +108,25 @@ class NN_feedback:
                 #Generating predictions for current batch
                 batch_pred = self.model.predict([x_batch, pred_error])
 
-                print(batch_pred)
-                print(batch_pred.shape)
-                i=input()
                 #Prediction error on current batch for feedback
                 pred_error = y_batch - batch_pred
 
-                print(pred_error)
-
-                exit(0)
-
-
-            avg_epoch_loss = np.average(batch_loss)
-
+                #Tracking training progression
+                progbar.add(self.batch_size, values=[("mae loss 1", loss[0])])
+                                                    #  ("mae loss 2", loss[1])])
+            
+            avg_epoch_loss = np.average(batch_loss[0])
             epoch_loss.append(avg_epoch_loss)
+            
+            print('')
+            print('Epoch {}/{}, Time: {}'.format(epoch + 1, self.epochs, time.time() - start))
 
-        training_loss = np.average(epoch_loss)
+        total_loss = np.average(epoch_loss)
 
-
-        print(error_init.shape)
-        exit(0)
+        print('Training is finished')
 
 
 
-        self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, validation_split=0.2, callbacks=[early_stopping, checkpoint], epochs = self.epochs, verbose=2, shuffle=True)
 
     def evaluate(self, model_path, x_test, y_test):
         self.model.compile(loss='mae', optimizer='adam',metrics=['mae','mse',self.rmse])
