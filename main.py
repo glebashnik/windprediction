@@ -7,15 +7,15 @@ import datetime
 from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
 from util.logging import write_results
-from data.dataset_generator import generate_bessaker_dataset, generate_skomaker_dataset
+from data.dataset_generator import generate_bessaker_dataset, generate_skomaker_dataset, generate_bessaker_dataset_extra
 
-from models.simple_lstm.main import RNN as LSTM
-from models.lstm_stateful.main import RNN as StatefulLSTM
+# from models.simple_lstm.main import RNN as LSTM
+# from models.lstm_stateful.main import RNN as StatefulLSTM
 from models.simple_ann.main import NN
 from models.dense_nn_forest.NN_forest import NN_forest
 from models.ann_error_feedback.ann_feedback import NN_feedback
 
-# from keras import optimizers
+from keras import optimizers
 from models.random_forest.main import RandomForest
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
