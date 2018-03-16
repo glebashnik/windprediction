@@ -72,7 +72,6 @@ class NN_feedback:
             'checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
-
         self.model.fit(x=x_train, y=[y_train, y_train_vector], batch_size=self.batch_size, validation_split=validation_split, callbacks=[
                        early_stopping, checkpoint], epochs=self.epochs, verbose=2, shuffle=True)
 

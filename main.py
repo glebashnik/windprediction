@@ -17,9 +17,9 @@ from models.random_forest.main import RandomForest
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
+# datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-# datapath = os.path.join('data','Bessaker', 'data_bessaker_advanced.csv')
+datapath = os.path.join('data','Bessaker Vindpark', 'data_bessaker_advanced.csv')
 
 
 # datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
@@ -73,6 +73,7 @@ opt_name = [
     'adam'
 ]
 
+#Define networks, domensions: (models,networks,layers)
 layers =[
     [[(32,False),(16,True),(8,False),(2,False)],
     [(128,False),(64,True),(32,False),(8,False)],
@@ -86,7 +87,6 @@ layers =[
     ]
 
 feedback_network = [(32,False),(16,True),(8,False),(2,False)]
-
 dropouts = [0.2, 0.3, 0.4, 0.5]
 
 def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
@@ -113,7 +113,8 @@ def execute_network_simple(x_train, x_test, y_train, y_test, layers, epochs, dro
     evaluation, metric_names = network.evaluate(modelpath, x_test, y_test)
     write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
 
-
+# Creates model, trains the network and saves the evaluation in a txt file.
+# Requires a specified network and training hyperparameters
 def execute_network_feedback(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
     
     network = NN_feedback(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
