@@ -24,7 +24,7 @@ def gen_batch(X1, X2, batch_size):
         yield x1, x2
 
 
-class NN_feedback:
+class NN_dual:
 
     def __init__(self, batch_size=32, epochs=1000, dropoutrate=0.3):
         self.batch_size = batch_size
@@ -33,7 +33,7 @@ class NN_feedback:
         self.relu_leak = 0.2
 
     # Build n networks and averages the final dense output
-    def build_feedback_model(self, input_dim, num_windmills, model_structure):
+    def build_model(self, input_dim, model_structure):
         input_layer = Input(shape=(input_dim,))
 
         x1 = self.dense_block(input_layer, 64, False, 0)
@@ -42,17 +42,14 @@ class NN_feedback:
         x4 = self.dense_block(x3, 8, False, 0)
         x5 = self.dense_block(x4, 2, False, 0)
 
-        single_prod = Dense(num_windmills)(x3)
-
-        # for layer in model_structure[1:]:
-
-        #     if layer[0] != 0:
-        #         x = self.dense_block(input_data = x, units = layer[0], dropout = layer[1])
+        # single_prod = Dense(num_windmills)(x3)
 
         total = Dense(1)(x5)
 
-        self.model = Model(inputs=input_layer, outputs=[total, single_prod])
-        # self.model.summary()
+        self.model = Model(inputs=input_layer, outputs=total)#, single_prod])
+        print(self.model.summary())
+        return self.model.summary()
+
 
     def dense_block(self, input_data, units, dropout=False, l2_reg=0):
 
@@ -72,12 +69,12 @@ class NN_feedback:
             'checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
-        self.model.fit(x=x_train, y=[y_train, y_train_vector], batch_size=self.batch_size, validation_split=validation_split, callbacks=[
+        self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, validation_split=validation_split, callbacks=[
                        early_stopping, checkpoint], epochs=self.epochs, verbose=2, shuffle=True)
 
     def evaluate(self, model_path, x_test, y_test):
         self.model.compile(loss='mae', optimizer='adam',
-                           metrics=['mae', 'mse', self.rmse])
+                           metrics='mae')
         self.model.load_weights(model_path)
 
         evaluation = self.model.evaluate(x_test, y_test)

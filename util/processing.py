@@ -25,10 +25,13 @@ def process_dataset_nn(dataset, testsplit=0.8, pca=False):
     if pca: data_x = extract_PCA_features(data_x,n_components=40)
     x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=1-testsplit)
 
+    print('Loaded training and test data with shape {} and {}, respectively'.format(x_train.shape,y_train.shape))
+
     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
     scaler.fit(x_train)
     x_train = scaler.transform(x_train)
     x_test = scaler.transform(x_test)
+
 
     return x_train, x_test, y_train, y_test
 

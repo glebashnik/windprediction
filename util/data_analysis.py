@@ -42,9 +42,22 @@ def extract_data(datapath, normalize = True):
 
 
 
-def extract_pearson_features(dataset, treshold = 0.5):
+def pearson(dataset):
 
     pearson_corr = dataset.corr(method='pearson',min_periods = 1)
+
+    col_names = dataset.columns
+
+    ax = dataset.plot.scatter(x='YVIK-YtreVikna1..-V1-T0016A3 -0108',y='YVIK-YtreVikna1.-G1-T4015A3 -0104',
+                   c='rekkefølge',cmap='coolwarm', figsize = (20,10))
+    
+    plt.xlabel('Naselle vindhastighet(m/s) [Variabelkode:]')
+    plt.ylabel('Produksjon i Mega Watt (MW) [Variabelkode:]')
+
+    fig = ax.get_figure()
+    fig.savefig('Korrelasjon forecast error og .png')
+
+
     topcorr = pearson_corr.iloc[-1]
 
     print('\nPearson correlation with total production as target\n')

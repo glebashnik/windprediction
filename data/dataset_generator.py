@@ -52,7 +52,7 @@ def generate_skomaker_dataset():
 def generate_bessaker_dataset(tek_path, arome_path):
     try:
         df_tek = pd.read_csv(tek_path, sep=';', header=0, decimal=',', low_memory=False)
-        df_arome = pd.read_csv(arome_path, sep=';',  header=0, decimal='.', low_memory=False)
+        df_arome = pd.read_csv(arome_path, sep=';',  header=0, decimal=',', low_memory=False)
     except:
         print('No data found on: ' + tek_path + ' or ' + arome_path)
         exit(1)    
@@ -102,39 +102,27 @@ def generate_bessaker_dataset(tek_path, arome_path):
 def generate_bessaker_dataset_extra(tek_path, arome_path):
     try:
         df_tek = pd.read_csv(tek_path, sep=';', header=0, decimal=',', low_memory=False)
-        df_arome = pd.read_csv(arome_path, sep=';',  header=0, decimal='.', low_memory=False)
+        df_arome = pd.read_csv(arome_path, sep=';',  header=0, decimal=',', low_memory=False)
     except:
         print('No data found on: ' + tek_path + ' or ' + arome_path)
         exit(1)    
 
-    # Creating error features
-    test = pd.DataFrame(data=df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1))#, columns=['1','2'])
-    num_mills = (len(test.columns.values))
-
+    # Error between nacelle and storm wind speed
+    forecast_error = pd.DataFrame(data=df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1))   
     cols_name = []
-    # for i in range(num_mills):
-    #     cols_name.append(str(i))
-
-    # test.columns = cols_name
-
-    # print(test.head())
-    # exit(0)
-    
     index = 0
-    for column in test.columns:
-        print(test[column].head())
-        print(df_tek.filter(like='STORM-Bess-Vindhast-25km', axis=1).head())
-        test[column].values = test[column].values - df_tek.filter(like='STORM-Bess-Vindhast-25km', axis=1).values
-        print('check')
-        print(test[column].head())
-        exit(0)
-        #Fix this - TODO
+    for column in forecast_error:
+        forecast_error[column] = forecast_error[column] - df_tek['STORM-Bess-Vindhast-25km']
         cols_name.append('Error_nacelle_storm_single_{}'.format(index))
+        forecast_error[column].rename('Error_nacelle_storm_single_{}'.format(index),axis='columns')
         index += 1
 
-    test.columns = cols_name
-    print(test.head())  
-    exit(0)
+    forecast_error.columns = cols_name
+
+
+    # df_arome['/arome_windvel_6347_1092'].head()
+    # df_tek['DNMI_71850...........T0015A3-0120'].head()
+    # exit(0)
 
     return pd.concat([
         #To do:
@@ -157,7 +145,6 @@ def generate_bessaker_dataset_extra(tek_path, arome_path):
         df_tek['DNMI_71550...........T0015A3-0120'],
         df_arome['/arome_windvel_6372_0961'],
         
-            
         # HALTEN FYR ( Kordinater: 64.173, 9.405 )
         df_tek['DNMI_71850...........T0015A3-0120'],
         df_arome['/arome_windvel_6413_0933'],
@@ -174,8 +161,7 @@ def generate_bessaker_dataset_extra(tek_path, arome_path):
         df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
 
         # Wind error pred
-        # df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1),#.rename('Single_target', inplace = True),
-        
+        forecast_error,        
 
         #Sum produksjon
         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
