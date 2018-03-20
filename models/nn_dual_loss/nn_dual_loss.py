@@ -33,7 +33,7 @@ class NN_dual:
         self.relu_leak = 0.2
 
     # Build n networks and averages the final dense output
-    def build_model(self, input_dim, model_structure):
+    def build_model(self, input_dim):
         input_layer = Input(shape=(input_dim,))
 
         x1 = self.dense_block(input_layer, 64, False, 0)
@@ -46,10 +46,10 @@ class NN_dual:
 
         total = Dense(1)(x5)
 
-        self.model = Model(inputs=input_layer, outputs=total)#, single_prod])
-        print(self.model.summary())
+        # , single_prod])
+        self.model = Model(inputs=input_layer, outputs=total)
+        self.model.summary()
         return self.model.summary()
-
 
     def dense_block(self, input_data, units, dropout=False, l2_reg=0):
 
@@ -61,8 +61,8 @@ class NN_dual:
         return LeakyReLU(self.relu_leak)(x)
 
     def train_network(self, x_train, y_train, y_train_vector, opt='adam', validation_split=0.15):
-        self.model.compile(loss=['mae', 'binary_crossentropy'], optimizer=opt,
-                           metrics=['mae', 'mse', self.rmse])
+        self.model.compile(loss='mae', optimizer=opt,
+                           metrics='mae')
 
         early_stopping = EarlyStopping(monitor='val_loss', patience=500)
         checkpoint = ModelCheckpoint(

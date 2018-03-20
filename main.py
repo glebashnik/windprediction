@@ -24,7 +24,8 @@ from models.random_forest.main import RandomForest
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-datapath = os.path.join('data','Bessaker Vindpark', 'data_bessaker_advanced.csv')
+datapath = os.path.join('data', 'Bessaker Vindpark',
+                        'data_bessaker_advanced.csv')
 
 tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
 arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
@@ -33,30 +34,30 @@ modelpath = os.path.join('checkpoint_model.h5')
 # datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
-dataset = generate_bessaker_dataset_extra(tek_path, arome_path)
-print(dataset.head())
-pearson(dataset)
-exit(0)
+dataset = generate_bessaker_dataset(tek_path, arome_path)
+# dataset = generate_bessaker_dataset_extra(tek_path, arome_path)
 
-#Hyperparameters for training network
+
+# Hyperparameters for training network
 testsplit = 0.8
 look_back = 6
 look_ahead = 1
 epochs = 1
-batch_size= 64
+batch_size = 64
 lr = 0.001
 decay = 1e-6
-momentum=0.9
+momentum = 0.9
 
-num_features = len(dataset.columns) -1
-x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=testsplit)
+num_features = len(dataset.columns) - 1
+x_train, x_test, y_train, y_test = process_dataset_nn(
+    dataset, testsplit=testsplit)
 print('Beginning model training on the path:')
 print(modelpath)
 print('Number of features: {}\n\n'.format(num_features))
 
-#Dense 
+# Dense
 # x_train, x_test, y_train, y_test = process_dataset_nn(
-#     dataset, 
+#     dataset,
 #     testsplit=testsplit
 # )
 
@@ -75,63 +76,70 @@ opt_name = [
     'adam'
 ]
 
-#Define networks, domensions: (models,networks,layers)
-layers =[
-    [[(32,False),(16,True),(8,False),(2,False)],
-    [(128,False),(64,True),(32,False),(8,False)],
-    [(64,False),(16,True),(6,False),(0,False)],
-    [(16,True),(8,False),(8,False),(0,False)]],
+# Define networks, domensions: (models,networks,layers)
+layers = [
+    [[(32, False), (16, True), (8, False), (2, False)],
+     [(128, False), (64, True), (32, False), (8, False)],
+     [(64, False), (16, True), (6, False), (0, False)],
+     [(16, True), (8, False), (8, False), (0, False)]],
 
-    [[(32,False),(16,True),(8,False),(2,False)],
-    [(64,False),(64,True),(32,False),(16,False)],
-    [(12,False),(6,True),(3,False),(0,False)],
-    [(69,False),(128,True),(32,False),(4,False)]],
+    [[(32, False), (16, True), (8, False), (2, False)],
+     [(64, False), (64, True), (32, False), (16, False)],
+     [(12, False), (6, True), (3, False), (0, False)],
+     [(69, False), (128, True), (32, False), (4, False)]],
 ]
 
-feedback_network = [(32,False),(16,True),(8,False),(2,False)]
+feedback_network = [(32, False), (16, True), (8, False), (2, False)]
 dropouts = [0.2, 0.3, 0.4, 0.5]
 
 ts = time.time()
 st = datetime.datetime.fromtimestamp(ts).strftime('M%m-D%d_h%H-m%M-s%S')
-logfile = open('results_{}.txt'.format(st),'w')
+logfile = open('results_{}.txt'.format(st), 'w')
 
 
-def execute_network_simple(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
-    
+def execute_network_simple(x_train, x_test, y_train, y_test, epochs, dropoutrate=0, opt='adam', optname='adam'):
+
     network = NN_dual(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
-    model_architecture = network.build_model(input_dim=num_features,model_structure=layers)
-    
-    network.train_network(x_train=x_train, y_train=y_train,opt=opt)
-    
+    model_architecture = network.build_model(
+        input_dim=num_features)
+
+    network.train_network(x_train=x_train, y_train=y_train, opt=opt)
+
     evaluation, metric_names = network.evaluate(modelpath, x_test, y_test)
-    write_results(logfile, 'bessaker advanced dataset', model_architecture, layers, evaluation, metric_names, epochs, optname, dropoutrate)
+    write_results(logfile, 'bessaker advanced dataset', model_architecture,
+                  layers, evaluation, metric_names, epochs, optname, dropoutrate)
 
 # Creates model, trains the network and saves the evaluation in a txt file.
 # Requires a specified network and training hyperparameters
-def execute_network_feedback(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
-    
-    network = NN_feedback(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
-    network.build_model(input_dim=num_features,model_structure=layers)
-    
+
+
+def execute_network_feedback(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt='adam', optname='adam'):
+
+    network = NN_feedback(batch_size=32, epochs=epochs,
+                          dropoutrate=dropoutrate)
+    network.build_model(input_dim=num_features, model_structure=layers)
+
     # network.visualize_model()
-    network.train_network(x_train=x_train, y_train=y_train,opt=opt)
+    network.train_network(x_train=x_train, y_train=y_train, opt=opt)
     print('training finished')
-    
+
     evaluation, metric_names = network.evaluate(modelpath, x_test, y_test)
-    write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
+    write_results(logfile, layers, evaluation, metric_names,
+                  epochs, optname, dropoutrate)
 
 
-execute_network_simple(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
+execute_network_simple(x_train, x_test, y_train, y_test, epochs)
 exit(0)
 
-execute_network_feedback(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
+execute_network_feedback(x_train, x_test, y_train,
+                         y_test, feedback_network, epochs, 0.3)
 
 
 for model in layers:
 
     for dropoutrate in dropouts:
 
-        execute_network(x_train, x_test, y_train, y_test, model, epochs, dropoutrate)
+        execute_network(x_train, x_test, y_train, y_test,
+                        model, epochs, dropoutrate)
 
         print('Network executed')
-
