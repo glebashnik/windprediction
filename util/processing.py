@@ -23,7 +23,7 @@ def feature_target_split(dataset):
 def process_dataset_nn(dataset, testsplit=0.8, pca=False):
     data_x, data_y = feature_target_split(dataset)
     if pca: data_x = extract_PCA_features(data_x,n_components=40)
-    x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=1-testsplit)
+    x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=1-testsplit, random_state=13)
 
     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
     scaler.fit(x_train)

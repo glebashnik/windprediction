@@ -7,7 +7,7 @@ import datetime
 from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
 from util.logging import write_results
-from data.dataset_generator import generate_bessaker_delta_target_dataset, generate_skomaker_dataset
+from data.dataset_generator import generate_bessaker_dataset, generate_skomaker_dataset, generate_bessaker_delta_target_dataset
 
 from models.simple_lstm.main import RNN as LSTM
 from models.lstm_stateful.main import RNN as StatefulLSTM

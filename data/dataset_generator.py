@@ -55,7 +55,7 @@ def generate_bessaker_dataset(tek_path, arome_path):
         exit(1)    
 
     return pd.concat([
-        df_tek.filter(regex='BESS-Bessakerfj.*-0104', axis=1),
+        df_tek.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1),
         df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
 
         df_arome.filter(like='6421_1035').shift(-2),
@@ -129,8 +129,7 @@ def generate_bessaker_delta_target_dataset(tek_path, arome_path):
         df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
         
         #Sum produksjon
-        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
-        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(-2).rename('Target', inplace=True),
+        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104']
 
     ], axis=1).iloc[:-2,:]
 
@@ -138,8 +137,16 @@ def generate_bessaker_delta_target_dataset(tek_path, arome_path):
     df = df.loc[:,~df.columns.duplicated()]
 
     # Endring av produksjon siden forrige time som input
-    df['DeltaProductionLastHour'] = df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].astype('d') - df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(1).astype('d')
+    df['DeltaProductionLastHour'] = df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].astype('d') \
+                                    - df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(1).astype('d')
+
+    # Finite difference approximation of double derivative
+    df['Delta2ProductionLastHour'] = df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].astype('d')\
+                                    - 2*df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(1).astype('d')\
+                                    + df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(2).astype('d')
 
     # Endring av produksjon over 2 timer som target
+    df['Target'] = df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(-2)
     df['Target'] = df['Target'].astype('d') - df['BESS-Bessakerfj.-GS-T4015A3 -0104'].astype('d')
-    return (df.iloc[2:,:])
+
+    return (df.iloc[3:,:])
