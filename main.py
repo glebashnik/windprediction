@@ -112,6 +112,9 @@ def execute_network_simple(dataset, note, epochs, dropoutrate=0.2, opt='adam', w
     x_train, x_test, y_train, y_test = process_dataset_nn(
         dataset, testsplit=testsplit)
 
+    print(x_train.shape)
+    print(y_train.shape)
+
     num_features = x_train.shape[1]
     num_targets = y_train.shape[1]
 
