@@ -94,12 +94,12 @@ def generate_bessaker_dataset(tek_path, arome_path):
         df_arome['/arome_windvel_6447_1156'],
 
         # Storm vind måling
-        # .rename('Single_target*', inplace=True),
         df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
 
 
         # Sum produksjon
-        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
+        # df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
+
         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(-2).rename(
             'Target', inplace=True),
 
@@ -172,11 +172,119 @@ def generate_bessaker_dataset_extra(tek_path, arome_path):
         df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
 
         # Wind error pred
-        forecast_error,
+        # forecast_error,
+
+        # Storm wind delta
+        (df_tek['STORM-Bess-Vindhast-25km'].shift(-2) - \
+         df_tek['STORM-Bess-Vindhast-25km'].shift(-1)).rename('Storm delta now - 1 hour', inplace=True),
+
+        (df_tek['STORM-Bess-Vindhast-25km'].shift(-1) - \
+         df_tek['STORM-Bess-Vindhast-25km']).rename(
+             'Storm delta 1 hour - 2 hour', inplace=True),
+
+
+
+
+        # production change from the previous hour
+        (df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'] - \
+         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(1)).rename('Production_delta', inplace=True),
 
         # Sum produksjon
         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(-2).rename(
             'Target', inplace=True),
+
+    ], axis=1).iloc[:-2, :]
+
+
+def generate_bessaker_dataset_single_target(tek_path, arome_path):
+    try:
+        df_tek = pd.read_csv(tek_path, sep=';', header=0,
+                             decimal=',', low_memory=False)
+        df_arome = pd.read_csv(arome_path, sep=';',
+                               header=0, decimal=',', low_memory=False)
+    except:
+        print('No data found on: ' + tek_path + ' or ' + arome_path)
+        exit(1)
+
+    # Error between nacelle and storm wind speed
+    single_target = pd.DataFrame(data=df_tek.filter(
+        regex='BESS-Bessakerfj.*-0104', axis=1).shift(-2))
+    cols_name = []
+    index = 0
+    for column in single_target:
+
+        cols_name.append('Single_target_{}'.format(index+1))
+        # single_target[column].rename(
+        #     'Error_nacelle_storm_single_{}'.format(index), axis='columns')
+        index += 1
+    cols_name[-1] = 'Target'
+
+    single_target.columns = cols_name
+
+    # df_arome['/arome_windvel_6347_1092'].head()
+    # df_tek['DNMI_71850...........T0015A3-0120'].head()
+    # exit(0)
+
+    return pd.concat([
+        # To do:
+        # Create error features (nacelle vs storm)
+        # Create derivative feature (production change or/and windchange)
+
+        # Single prod
+        df_tek.filter(regex='BESS-Bessakerfj.*-0104', axis=1),
+        # Nacelle
+        df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
+
+        df_arome.filter(like='6421_1035').shift(-2),
+        df_arome.filter(like='6422_1040').shift(-2),
+
+        # Værnes
+        df_tek['DNMI_69100...........T0015A3-0120'],
+        df_arome['/arome_windvel_6347_1092'],
+
+        # ØRLAND III (Koordinater: 63.705, 9.611)
+        df_tek['DNMI_71550...........T0015A3-0120'],
+        df_arome['/arome_windvel_6372_0961'],
+
+        # HALTEN FYR ( Kordinater: 64.173, 9.405 )
+        df_tek['DNMI_71850...........T0015A3-0120'],
+        df_arome['/arome_windvel_6413_0933'],
+
+        # BUHOLMRÅSA FYR (kordinater: 64.401, 10.455)
+        df_tek['DNMI_71990...........T0015A3-0120'],
+        df_arome['/arome_windvel_6440_1047'],
+
+        # NAMSOS LUFTHAVN (Koordinater: 64.471, 11.571)
+        df_tek['DNMI_72580...........T0015A3-0120'],
+        df_arome['/arome_windvel_6447_1156'],
+
+        # Storm vind måling
+        df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
+
+        # Wind error pred
+        # forecast_error,
+
+        # Storm wind delta
+        (df_tek['STORM-Bess-Vindhast-25km'].shift(-2) - \
+         df_tek['STORM-Bess-Vindhast-25km'].shift(-1)).rename('Storm delta now - 1 hour', inplace=True),
+
+        (df_tek['STORM-Bess-Vindhast-25km'].shift(-1) - \
+         df_tek['STORM-Bess-Vindhast-25km']).rename(
+             'Storm delta 1 hour - 2 hour', inplace=True),
+
+
+
+
+        # production change from the previous hour
+        (df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'] - \
+         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(1)).rename('Production_delta', inplace=True),
+
+        # Sum produksjon
+        # df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
+
+        single_target,
+        # df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(-2).rename(
+        #     'Target', inplace=True),
 
     ], axis=1).iloc[:-2, :]

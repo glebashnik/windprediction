@@ -1,23 +1,58 @@
+import time
+import datetime
+import os
+import h5py
+from shutil import copyfile
 # Writes results to log
-def write_results(file,note,model_arch,layers,results,metrics, epochs=0, optimizer='adam', dropoutrate= 0, ahed=None, back=None):
-    print()    
-    model_arch(print_fn=lambda x: file.write(x + '\n'))
 
-    file.write('\n' + note + '\n')
-    if (ahed != None) and (back != None): file.write('\nLookback: {} Lookahed: {}'.format(ahed,back))
 
-    file.write('\nOptimizer: ' + optimizer)
+def write_results(park, model_arch, note, num_features, hist_loss, results, metrics, epochs, optimizer='adam', dropoutrate=0, ahed=None, back=None):
 
-    file.write('\nDropoutrate: {}'.format(dropoutrate))
+    # Initialize folders and paths
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('M%m-D%d_h%H-m%M-s%S')
 
-    file.write('\nTrained {} epochs\n'.format(epochs))
-    
-    for i,item in enumerate(metrics):
-        file.write('  ' + item)
-    file.write('\n')
+    basename = os.path.join('result_log', st)
 
-    for i,item in enumerate(results):
-        file.write("{}".format(item) + ', ')
+    if not os.path.isdir(basename):
+        os.mkdir(basename)
 
-    file.write('\n')
-    file.close()
+    log_name = os.path.join(basename, 'results_{}.txt'.format(st))
+    log_name_h5 = os.path.join(basename, 'results_{}.h5'.format(st))
+    logfile = open(log_name, 'w')
+
+    # Save model to folder
+    copyfile('checkpoint_model.h5', os.path.join(
+        basename, 'checkpoint_model.h5'))
+
+    # Save loss history as h5 file
+    with h5py.File(log_name_h5, 'w') as hf:
+        hf.create_dataset('mae_loss', data=hist_loss['loss'])
+        hf.create_dataset('mae_val_loss', data=hist_loss['val_loss'])
+
+    # Save hyperparameter info (and what not) in txt file
+    print()
+    if model_arch != None:
+        model_arch.summary(print_fn=lambda x: logfile.write(x + '\n'))
+
+    logfile.write('\n\n' + park + '\n')
+
+    logfile.write(note)
+
+    logfile.write('\nFeatures: {}'.format(num_features))
+
+    if (ahed != None) and (back != None):
+        logfile.write('\nLookback: {} Lookahed: {}'.format(ahed, back))
+
+    logfile.write('\nOptimizer: ' + optimizer)
+
+    logfile.write('\nDropoutrate: {}'.format(dropoutrate))
+
+    logfile.write('\nTrained {} epochs\n'.format(epochs))
+
+    logfile.write('{} test evaluation\n'.format(metrics[-1]))
+
+    logfile.write('{}'.format(results[-1]))
+
+    logfile.write('\n')
+    logfile.close()
