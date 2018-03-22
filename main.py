@@ -22,8 +22,6 @@ from models.random_forest.main import RandomForest
 
 import h5py
 
-visualize_loss_history('M03-D21_h20-m07-s13')
-exit(0)
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -44,10 +42,13 @@ dataset = generate_bessaker_dataset_extra(tek_path, arome_path)
 
 
 # # Extracting indices of most important features
-dataset = dataset.drop(['BESS-Bessakerfj.-GS-T4015A3 -0104'], axis=1)
-dataset = feature_importance(
-    dataset, scope=3000, num_features=40, print_=True)
-exit(0)
+# dataset = dataset.drop(['BESS-Bessakerfj.-GS-T4015A3 -0104'], axis=1)
+# dataset = feature_importance(
+#     dataset, scope=3000, num_features=40, print_=True)
+# exit(0)
+
+# visualize_loss_history('M03-D21_h20-m07-s13')
+# exit(0)
 
 # Hyperparameters for training network
 testsplit = 0.7
