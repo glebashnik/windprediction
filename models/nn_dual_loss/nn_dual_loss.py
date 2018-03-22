@@ -7,7 +7,7 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split, KFold
 from keras import backend as K
-from keras.layers import Input, Dense, LeakyReLU, BatchNormalization, Average, Dropout, Concatenate
+from keras.layers import Input, Dense, LeakyReLU, BatchNormalization, Average, Dropout, Concatenate, GaussianNoise
 from keras.models import Model, Sequential
 from keras import optimizers
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -52,7 +52,7 @@ class NN_dual:
         out_avg = Average()(network_list)
 
         self.model = Model(inputs=input_layer, outputs=out_avg)
-        return self.model.summary()
+        return self.model
 
     def build_model(self, input_dim, output_dim):
         input_layer = Input(shape=(input_dim,))
@@ -66,7 +66,25 @@ class NN_dual:
 
         # single_prod = Dense(num_windmills)(x3)
 
-        total = Dense(1)(x5)
+        total = Dense(1)(x4)
+
+        # , single_prod])
+        self.model = Model(inputs=input_layer, outputs=total)
+        self.model.summary()
+        return self.model
+
+    def build_model_single_targets(self, input_dim, output_dim):
+        input_layer = Input(shape=(input_dim,))
+        # x0 = GaussianNoise(0.15)(input_layer)
+        # x1 = self.dense_block(input_layer, 128, False, 0)
+        x1 = self.dense_block(input_layer, 100, False, 0)
+        x2 = self.dense_block(x1, 60, True, 0)
+        x3 = self.dense_block(x2, 40, False, 0)
+        # x4 = self.dense_block(x3, 30, False, 0)
+
+        # single_prod = Dense(num_windmills)(x3)
+
+        total = Dense(output_dim)(x3)
 
         # , single_prod])
         self.model = Model(inputs=input_layer, outputs=total)
@@ -82,11 +100,11 @@ class NN_dual:
         x = BatchNormalization()(x)
         return LeakyReLU(self.relu_leak)(x)
 
-    def train_network(self, x_train, y_train, opt='adam', validation_split=0.10):
+    def train_network(self, x_train, y_train, opt='adam', validation_split=0.2):
         self.model.compile(loss='mae', optimizer=opt,
                            metrics=['mae'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=750)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=600)
         checkpoint = ModelCheckpoint(
             'checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
@@ -103,12 +121,23 @@ class NN_dual:
 
         return self.model.predict(x)
 
-    def evaluate(self, x_test, y_test):
+    def evaluate(self, x_test, y_test, single_targets):
         self.model.compile(loss='mae', optimizer='adam',
                            metrics=['mae'])
         self.model.load_weights(self.model_path)
 
-        evaluation = self.model.evaluate(x_test, y_test)
+        if not single_targets:
+            evaluation = self.model.evaluate(x_test, y_test)
+
+        else:
+            predictions = self.model.predict(x_test)
+            print(predictions.shape)
+            predictions = np.sum(predictions, axis=1)
+            gt = np.sum(y_test, axis=1)
+            print('eval')
+            evaluation = np.mean(np.abs(predictions - gt))
+
+        print(evaluation)
 
         return evaluation, self.model.metrics_names
 

@@ -52,7 +52,11 @@ def write_results(park, model_arch, note, num_features, hist_loss, results, metr
 
     logfile.write('{} test evaluation\n'.format(metrics[-1]))
 
-    logfile.write('{}'.format(results[-1]))
+    logfile.write('{}\n'.format(results))
+
+    logfile.write('{} training loss\n'.format(metrics[-1]))
+
+    logfile.write('{}'.format(hist_loss['loss'][-1]))
 
     logfile.write('\n')
     logfile.close()

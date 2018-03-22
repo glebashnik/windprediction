@@ -46,6 +46,8 @@ def feature_importance(dataset, scope=None, num_features=20, print_=True, n_jobs
     # Sorting features by importance
     indices = np.argsort(importances)[::-1]
 
+    # indices = indecis[:40]
+
     # Print the feature ranking
     print("Feature ranking:")
 
@@ -55,14 +57,17 @@ def feature_importance(dataset, scope=None, num_features=20, print_=True, n_jobs
 
     # Plot the feature importances of the forest
     plt.figure()
-    plt.title("Feature importances")
+    # plt.title("Feature importances")
+
     plt.bar(range(x.shape[1]), importances[indices],
             color="r", yerr=std[indices], align="center")
+    plt.yticks(rotation='vertical')
     plt.xticks(range(x.shape[1]),
                features[indices], rotation='vertical')
     plt.xlim([-1, x.shape[1]])
     plt.tight_layout()
 
+    plt.savefig('note.png')
     if print_:
         plt.show()
 

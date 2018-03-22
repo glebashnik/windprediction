@@ -13,10 +13,10 @@ from sklearn.decomposition import PCA
 def feature_target_split(dataset):
     dataset = dataset.dropna()
 
-    data_x = dataset.iloc[:, :-1].values
-    data_y = dataset.iloc[:, -1:].values
+    data_x = dataset.iloc[:, :-1]
+    data_y = dataset.iloc[:, -1:]
 
-    return data_x, data_y
+    return data_x, data_y.values
 
 
 def feature_single_target_split(dataset):
@@ -43,7 +43,7 @@ def process_dataset_nn(dataset, testsplit=0.8, pca=False, single_targets=False):
         data_x = extract_PCA_features(data_x, n_components=40)
 
     x_train, x_test, y_train, y_test = train_test_split(
-        data_x, data_y, test_size=1-testsplit)
+        data_x, data_y, test_size=1-testsplit, random_state=1745)
 
     print('Loaded training and test data with shape {} and {}, respectively'.format(
         x_train.shape, y_train.shape))

@@ -1,9 +1,0 @@
-
-Bessaker Vindpark
-training with error features, 128-64-32-16-8-2-1
-Features: 97
-Optimizer: adam
-Dropoutrate: 0
-Trained 5000 epochs
-mean_absolute_error test evaluation
-3.773011952842154
