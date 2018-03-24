@@ -101,7 +101,7 @@ def format_arome_files(data_path, out_path, keep_first_hours=6):
 
     all_dfs = pd.concat(formatted_dfs)
     all_dfs.reset_index(drop=True, inplace=True)
-    all_dfs.to_csv(out_path)
+    all_dfs.to_csv(out_path, sep=';', index=False)
 
 def main(argv):
     data_path = ''
