@@ -2,27 +2,27 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
-import datatime
+import datetime
 
 from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import compare_predictions
 from util.logging import write_results
-from data.dataset_generator import generate_bessaker_dataset, generate_skomaker_dataset
+from data.dataset_generator import generate_bessaker_dataset, generate_skomaker_dataset, generate_bessaker_delta_target_dataset
 
 from models.simple_lstm.main import RNN as LSTM
 from models.lstm_stateful.main import RNN as StatefulLSTM
 from models.simple_ann.main import NN
-from models.dense_nn_forest.NN_forest import NN_forest
+from models.Dense_NN_Forest.NN_forest import NN_forest
 from models.ann_error_feedback.ann_feedback import NN_feedback
 
 from keras import optimizers
 from models.random_forest.main import RandomForest
 
-tek_path = os.path.join('data', 'vindkraft 130717-160218 TEK met.csv')
-arome_path = os.path.join('data', 'vindkraft 130717-160218 arome korr winddir.csv')
+tek_path = os.path.join('data/raw', 'vindkraft 130717-160218 TEK met.csv')
+arome_path = os.path.join('data/raw', 'vindkraft 130717-160218 arome korr winddir.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
-dataset = generate_bessaker_dataset(tek_path, arome_path)
+dataset = generate_bessaker_delta_target_dataset(tek_path, arome_path)
 
 num_features = len(dataset.columns) -1
 x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=0.7)
@@ -84,7 +84,7 @@ logfile = open('results_{}.txt'.format(st),'w')
 
 def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
     nn_network = NN_forest(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
-
+    ""
     nn_network.build_model(input_dim=num_features,model_structure=layers)
 
     # nn_network.visualize_model()
@@ -106,8 +106,7 @@ def execute_network_NN_feedback(x_train, x_test, y_train, y_test, layers, epochs
     evaluation, metric_names = network.evaluate(modelpath, x_test, y_test)
     write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
 
-
-execute_network_NN_feedback(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
+execute_network(x_train, x_test, y_train, y_test, layers[0], epochs, 0.3) 
 exit(0)
 
 
