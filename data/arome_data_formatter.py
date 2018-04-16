@@ -24,17 +24,36 @@ retain_arome_locations = [
 ]
 
 station_dict = {
-    'Bessaker': '', 
-    'Valsneset': '', 
-    'Buholmraasa': 'DNMI_71990',
-    'Halten': 'DNMI_71850',
-    'Namsos': 'DNMI_72580',
-    'Oerlandet': 'DNMI_71550',
-    'Roervik': 'DNMI_75220',
-    'Vaernes': 'DNMI_69100',
-    'Sula': 'DNMI_65940',
-    'Namsskogan': 'DNMI_74350',
-    'Skomaker': '',
+    'bessaker': '', 
+    'valsneset': '',
+
+    'buholmraasa': 'DNMI_71990',
+    'buholmråsa fyr': 'DNMI_71990',
+
+    'halten': 'DNMI_71850',
+    'halten fyr': 'DNMI_71850',
+
+    'namsos': 'DNMI_72580',
+    'namsos lufthavn': 'DNMI_72580',
+
+    'roervik': 'DNMI_75220',
+    'rørvik lufthavn': 'DNMI_75220',
+
+    'oerlandet': 'DNMI_71550',
+    'ørland iii': 'DNMI_71550',
+
+    'vaernes': 'DNMI_69100',
+    'værnes': 'DNMI_69100',
+    
+    'sula': 'DNMI_65940',
+    'namsskogan': 'DNMI_74350',
+    'nordøyan fyr': 'DNMI_75410',
+    'sklinna fyr': 'DNMI_75550',
+    'sømna-kvaløyfjellet': 'DNMI_76240', 
+    'brønnøysund lufthavn': 'DNMI_76330',  
+    'vega-vallsjø': 'DNMI_76450',   
+    
+    'skomaker': '',
 }
 
 col_dict = {
@@ -43,6 +62,21 @@ col_dict = {
     'winddir': 'T0014A3-0113', 
     'airpress': 'T0004A3-0116',
 }
+
+def get_closest_arome(df, arome):
+    lat = float(arome.split('|')[0])
+    lon = float(arome.split('|')[1])
+    cols = df['location'].unique()
+
+    for delta in range(-1, 2, 1):
+        delta_val = delta * 0.01
+        
+        if str(lat + delta_val) + '|' + str(lon) in cols:
+            return str(lat + delta * delta_val) + '|' + str(lon)
+        elif str(lat) + '|' + str(lon + delta_val) in cols:
+            return str(lat) + '|' + str(lon + delta_val)
+        elif str(lat + delta_val) + '|' + str(lon + delta_val) in cols:
+            return str(lat + delta_val) + '|' + str(lon + delta_val)  
 
 def format_arome_col(col, location):
     lat, long = location.split('|')
@@ -58,7 +92,7 @@ def format_weather_station_col(col, station):
         return '{}...........{}'.format(station_code, col_code)
     return ''
 
-def arome_from_raw_df(arome_df, hours_to_keep):
+def arome_from_raw_df(arome_df, hours_to_keep, cols_to_keep):
     cols = defaultdict(list)
     for timestamp in arome_df['timestamp'].unique()[:hours_to_keep]:
         cols['timestamp'].append(timestamp)
@@ -67,7 +101,7 @@ def arome_from_raw_df(arome_df, hours_to_keep):
     hours_kept = 1
     for index, row in arome_df.iterrows():
         current_timestamp = row['timestamp']
-        location = row['location']
+        location = row['location'].lower()
         
         if prev_timestamp != current_timestamp:
             prev_timestamp = current_timestamp
@@ -76,7 +110,8 @@ def arome_from_raw_df(arome_df, hours_to_keep):
         if hours_kept > hours_to_keep:
             break
         
-        if location not in retain_arome_locations and location not in station_dict.keys():
+        #if location not in cols_to_keep and location not in station_dict.keys():
+        if location not in station_dict.keys():
             continue
  
         for col in arome_df.columns[2:]:
@@ -93,10 +128,13 @@ def format_arome_files(data_path, out_path, keep_first_hours=6):
     filenames = list(filter(lambda filename: filename.endswith('.csv'), filenames))
     
     formatted_dfs = []
-    for index, filename in enumerate(filenames):
+    for index, filename in enumerate(sorted(filenames)[0:2]):
         print('Formatting {}, file number {} of {}'.format(filename, index + 1, len(filenames)))
         raw_df = pd.read_csv(filename, names=arome_col_names, sep=';', low_memory=False)
-        arome_df = arome_from_raw_df(raw_df, keep_first_hours)
+        #cols_to_keep = map(lambda arome: get_closest_arome(raw_df, arome), retain_arome_locations)
+        cols_to_keep = retain_arome_locations
+        arome_df = arome_from_raw_df(raw_df, keep_first_hours, cols_to_keep)
+        print(arome_df.info())
         formatted_dfs.append(arome_df)
 
     all_dfs = pd.concat(formatted_dfs)

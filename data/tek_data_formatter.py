@@ -37,10 +37,16 @@ def format_tek_files(data_path, out_path):
     except:
         print('One or more files is missing from ' + data_path)
     
-    all_dfs =[bess_windvel, bess_prod, bess_error, bess_heading, bess_status, vals_prod, vals_error, vals_heading, vals_status, storm_windvel, storm_airtemp, storm_winddir]
-    joined = reduce(lambda left, right: pd.merge(left, right, on='ExcelDato'), all_dfs)
-    joined['ExcelDato'] = joined['ExcelDato'].apply(excel_date_to_normal_date)
-    joined.to_csv(out_path, sep=';', index=False)
+    all_dfs =[bess_prod, bess_error, bess_heading, bess_status, vals_prod, vals_error, vals_heading, vals_status, storm_windvel, storm_airtemp, storm_winddir]
+    
+    bess_windvel['ExcelDato'] = bess_windvel['ExcelDato'].apply(excel_date_to_normal_date)
+    bess_windvel.set_index('ExcelDato')
+
+    for df in all_dfs:
+        df['ExcelDato'] = df['ExcelDato'].apply(excel_date_to_normal_date)
+        bess_windvel = pd.concat([bess_windvel, df.drop('ExcelDato', axis=1)], axis=1)
+    #print(bess_windvel.info(verbose=True))
+    bess_windvel.to_csv(out_path, sep=';', index=False)
 
 def main(argv):
     data_path = ''
@@ -68,3 +74,5 @@ def main(argv):
 
 if __name__ == '__main__':
    main(sys.argv[1:])
+   #print(excel_date_to_normal_date(41456.0000))
+   #print(excel_date_to_normal_date(43159.9583))
