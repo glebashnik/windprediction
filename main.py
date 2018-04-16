@@ -139,11 +139,11 @@ def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', wri
 
     network = NN_dual(model_path=model_path, batch_size=32, epochs=epochs,
                       dropoutrate=dropoutrate)
-    network.summary()
 
     if not single_targets:
         model_architecture = network.build_model(
             input_dim=num_features, output_dim=num_targets)
+        model_architecture.summary()
     else:
         model_architecture = network.build_model_single_targets(
             input_dim=num_features, output_dim=num_targets)
