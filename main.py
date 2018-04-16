@@ -1,4 +1,5 @@
 import os
+import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
@@ -18,7 +19,7 @@ from models.ann_error_feedback.ann_feedback import NN_feedback
 from models.nn_dual_loss.nn_dual_loss import NN_dual
 
 # from keras import optimizers
-from models.random_forest.main import RandomForest
+from models.random_forest.random_forest import RandomForest
 
 import h5py
 
@@ -42,7 +43,12 @@ tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
 arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
 model_path = os.path.join('checkpoint_model.h5')
 
-dataset = generate_bessaker_dataset(tek_path, arome_path)
+tek_out_path = os.path.join('data', 'tek_out.csv')
+dataset = generate_bessaker_large_dataset(tek_out_path)
+
+dataset = dataset.dropna()
+
+
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 # dataset = generate_bessaker_large_dataset(datapath)
 
@@ -54,6 +60,15 @@ dataset = generate_bessaker_dataset(tek_path, arome_path)
 
 # visualize_loss_history('M03-D21_h20-m07-s13')
 # exit(0)
+
+# Selection of gpu
+parser = argparse.ArgumentParser(
+    description='Main script for training av evaluating assorted networks')
+parser.add_argument('--gpu', required=True,
+                    help='Select which GPU to train on')
+args = parser.parse_args()
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 
 # Hyperparameters for training network
 testsplit = 0.7
@@ -124,6 +139,7 @@ def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', wri
 
     network = NN_dual(model_path=model_path, batch_size=32, epochs=epochs,
                       dropoutrate=dropoutrate)
+    network.summary()
 
     if not single_targets:
         model_architecture = network.build_model(
@@ -175,8 +191,7 @@ def execute_random_forest(dataset, notes):
     num_features = x_train.shape[1]
     num_targets = y_train.shape[1]
 
-    network = RandomForest_featureimportance(model_path=model_path, batch_size=32, epochs=epochs,
-                                             dropoutrate=dropoutrate)
+    network = RandomForest()
 
     model_architecture = network.build_forest_model(
         input_dim=num_features, model_structure=layers)
@@ -195,16 +210,16 @@ def execute_random_forest(dataset, notes):
     # Requires a specified network and training hyperparameters
 
 
+execute_network_simple(
+    dataset, 'Regular network, large bessaker dataset', epochs, write_log=True, single_targets=False)
+
+exit(0)
 execute_network_advanced(
     dataset, 'training on network forest', best_network, epochs, write_log=True)
 
 
-execute_network_simple(
-    dataset, 'Regular network, large bessaker dataset', epochs, write_log=True, single_targets=False)
-
 execute_network_advanced(
     dataset, 'training on network forest', network_forest, epochs, write_log=True)
-exit(0)
 
 dataset = feature_importance(
     dataset, scope=3000, num_features=48, print_=False)

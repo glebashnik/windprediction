@@ -57,8 +57,8 @@ class NN_dual:
     def build_model(self, input_dim, output_dim):
         input_layer = Input(shape=(input_dim,))
 
-        # x1 = self.dense_block(input_layer, 128, False, 0)
-        x1 = self.dense_block(input_layer, 64, True, 0)
+        x1 = self.dense_block(input_layer, 128, False, 0)
+        x1 = self.dense_block(input_layer, 64, False, 0)
         x2 = self.dense_block(x1, 32, False, 0)
         x3 = self.dense_block(x2, 16, False, 0)
         x4 = self.dense_block(x3, 8, False, 0)

@@ -429,7 +429,7 @@ def generate_bessaker_large_dataset(tek_path):
         df_tek.filter(regex='BESS-BessakerfNP-V*', axis=1),
 
         # Mølle status
-        df_tek.filter(regex='RRS.S2464.Gunit.M1-7*', axis=1),
+        # df_tek.filter(regex='RRS.S2464.Gunit.M1-7*', axis=1),
 
         # Air temperature forecast (på skomakerfjellet)
 
@@ -439,26 +439,26 @@ def generate_bessaker_large_dataset(tek_path):
         #           Værstasjoner                      #
         ###############################################
 
-        # Værnes
-        df_tek['DNMI_69100...........T0015A3-0120'],
+        # # Værnes
+        # df_tek['DNMI_69100...........T0015A3-0120'],
 
-        # ØRLAND III (Koordinater: 63.705, 9.611)
-        df_tek['DNMI_71550...........T0015A3-0120'],
+        # # ØRLAND III (Koordinater: 63.705, 9.611)
+        # df_tek['DNMI_71550...........T0015A3-0120'],
 
-        # HALTEN FYR ( Kordinater: 64.173, 9.405 )
-        df_tek['DNMI_71850...........T0015A3-0120'],
+        # # HALTEN FYR ( Kordinater: 64.173, 9.405 )
+        # df_tek['DNMI_71850...........T0015A3-0120'],
 
-        # BUHOLMRÅSA FYR (kordinater: 64.401, 10.455)
-        df_tek['DNMI_71990...........T0015A3-0120'],
+        # # BUHOLMRÅSA FYR (kordinater: 64.401, 10.455)
+        # df_tek['DNMI_71990...........T0015A3-0120'],
 
-        # NAMSOS LUFTHAVN (Koordinater: 64.471, 11.571)
-        df_tek['DNMI_72580...........T0015A3-0120'],
+        # # NAMSOS LUFTHAVN (Koordinater: 64.471, 11.571)
+        # df_tek['DNMI_72580...........T0015A3-0120'],
 
         # Storm måling vindhastighet og retning
         df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
 
         # Sum produksjon
-        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
-        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].astype(
+        df_tek['/TS-Straum066_BessVind_Inn'],
+        df_tek['/TS-Straum066_BessVind_Inn'].astype(
             'd').shift(-2).rename('Target', inplace=True),
     ], axis=1).iloc[:-2, :]
