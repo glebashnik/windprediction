@@ -57,7 +57,7 @@ class NN_dual:
     def build_model(self, input_dim, output_dim):
         input_layer = Input(shape=(input_dim,))
 
-        x1 = self.dense_block(input_layer, 128, False, 0)
+        # x1 = self.dense_block(input_layer, 128, False, 0)
         x1 = self.dense_block(input_layer, 64, False, 0)
         x2 = self.dense_block(x1, 32, False, 0)
         x3 = self.dense_block(x2, 16, False, 0)
@@ -104,7 +104,7 @@ class NN_dual:
         self.model.compile(loss='mae', optimizer=opt,
                            metrics=['mae'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=600)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=400)
         checkpoint = ModelCheckpoint(
             'checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 

@@ -35,7 +35,7 @@ modelpath = os.path.join('checkpoint_model.h5')
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-# park = 'Bessaker large'
+park = 'Bessaker large'
 
 # datapath = os.path.join('data', park)
 
@@ -44,12 +44,12 @@ arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
 model_path = os.path.join('checkpoint_model.h5')
 
 tek_out_path = os.path.join('data', 'tek_out.csv')
-dataset = generate_bessaker_large_dataset(tek_out_path)
+# dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 
+dataset = generate_bessaker_large_dataset(tek_out_path)
 dataset = dataset.dropna()
 
 
-# dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 # dataset = generate_bessaker_large_dataset(datapath)
 
 # # Extracting indices of most important features
@@ -74,7 +74,7 @@ print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 testsplit = 0.7
 look_back = 6
 look_ahead = 1
-epochs = 3000
+epochs = 500
 batch_size = 64
 lr = 0.001
 decay = 1e-6
@@ -211,7 +211,12 @@ def execute_random_forest(dataset, notes):
 
 
 execute_network_simple(
-    dataset, 'Regular network, large bessaker dataset', epochs, write_log=True, single_targets=False)
+    dataset, 'Training with 38700 samples', epochs, write_log=True, single_targets=False)
+
+dataset = dataset[0:8000]
+
+execute_network_simple(
+    dataset, 'Training with 8000 samples', epochs, write_log=True, single_targets=False)
 
 exit(0)
 execute_network_advanced(
