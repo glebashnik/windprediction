@@ -42,6 +42,6 @@ if __name__ == '__main__':
         network = sys.argv[1]
     except IndexError:
         print('no network given')
-        network = 'M03-D21_h19-m51-s15'
+        network = 'M04-D16_h18-m03-s37'
 
     visualize_loss_history(network)

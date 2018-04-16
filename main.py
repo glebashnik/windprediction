@@ -191,38 +191,30 @@ def execute_random_forest(dataset, notes):
     num_features = x_train.shape[1]
     num_targets = y_train.shape[1]
 
-    network = RandomForest()
+    forest = RandomForest_featureimportance()
 
-    model_architecture = network.build_forest_model(
-        input_dim=num_features, model_structure=layers)
-    model_architecture.summary()
+    forest.train(x_train, y_train)
 
-    hist_loss, model = network.train_network(
-        x_train=x_train, y_train=y_train, opt=opt)
+    evaluation = forest.test(x_test, y_test)
 
-    evaluation, metric_names = network.evaluate(
-        x_test, y_test, single_targets=False)
+    print('Test evaluation on random forest: {}'.format(evaluation))
 
-    if write_log:
-        write_results(park, model_architecture, note, num_features,
-                      hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
     # Creates model, trains the network and saves the evaluation in a txt file.
     # Requires a specified network and training hyperparameters
 
 
-execute_network_simple(
-    dataset, 'Training with 38700 samples', epochs, write_log=True, single_targets=False)
+execute_network_advanced(
+    dataset, 'training huge network forest full dataset 38700', network_forest, epochs, write_log=True)
 
-dataset = dataset[0:8000]
+
+execute_network_advanced(
+    dataset, 'training best network forest, only 38700', best_network, epochs, write_log=True)
+
 
 execute_network_simple(
-    dataset, 'Training with 8000 samples', epochs, write_log=True, single_targets=False)
+    dataset, 'Training simpole network with 38700 samples', epochs, write_log=True, single_targets=False)
 
 exit(0)
-execute_network_advanced(
-    dataset, 'training on network forest', best_network, epochs, write_log=True)
-
-
 execute_network_advanced(
     dataset, 'training on network forest', network_forest, epochs, write_log=True)
 

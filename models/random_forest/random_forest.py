@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 class RandomForest:
 
-    def __init__(self, features):
-        self.features = features
+    def __init__(self):
+        print('Random forest object created')
 
     def train(self, x, y):
         from sklearn.ensemble import RandomForestRegressor
