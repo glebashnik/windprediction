@@ -33,6 +33,14 @@ def feature_single_target_split(dataset):
 # ALl returned values are NDArrays
 
 
+def process_dataset_nn(dataset, testsplit=0.8, pca=False):
+    data_x, data_y = feature_target_split(dataset)
+    if pca:
+        data_x = extract_PCA_features(data_x, n_components=40)
+    x_train, x_test, y_train, y_test = train_test_split(
+        data_x, data_y, test_size=1-testsplit, random_state=13)
+
+
 def process_dataset_nn(dataset, testsplit=0.8, pca=False, single_targets=False):
     if not single_targets:
         data_x, data_y = feature_target_split(dataset)

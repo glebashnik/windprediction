@@ -65,9 +65,7 @@ def generate_bessaker_dataset(tek_path, arome_path):
         exit(1)
 
     return pd.concat([
-        # Single prod
-        df_tek.filter(regex='BESS-Bessakerfj.*-0104', axis=1),
-        # Nacelle
+        df_tek.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1),
         df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
 
         df_arome.filter(like='6421_1035').shift(-2),
@@ -97,22 +95,20 @@ def generate_bessaker_dataset(tek_path, arome_path):
         # Storm vind måling
         df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
 
-
         # Sum produksjon
-        # df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
-
-        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(-2).rename(
-            'Target', inplace=True),
-
+        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
+        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].astype(
+            'd').shift(-2).rename('Target', inplace=True),
     ], axis=1).iloc[:-2, :]
 
 
-def generate_bessaker_dataset_extra(tek_path, arome_path):
+# Generates dataset for predicting change in production
+def generate_bessaker_delta_target_dataset(tek_path, arome_path):
     try:
         df_tek = pd.read_csv(tek_path, sep=';', header=0,
                              decimal=',', low_memory=False)
         df_arome = pd.read_csv(arome_path, sep=';',
-                               header=0, decimal=',', low_memory=False)
+                               header=0, decimal='.', low_memory=False)
     except:
         print('No data found on: ' + tek_path + ' or ' + arome_path)
         exit(1)
@@ -236,14 +232,14 @@ def generate_bessaker_dataset_single_target(tek_path, arome_path):
         # Create error features (nacelle vs storm)
         # Create derivative feature (production change or/and windchange)
 
-        # Single prod
-        df_tek.filter(regex='BESS-Bessakerfj.*-0104', axis=1),
-        # Nacelle
+        # Bessaker molle produksjon
+        df_tek.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1),
+
+        # Bessaker mølle vindhastighet
         df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
 
         df_arome.filter(like='6421_1035').shift(-2),
         df_arome.filter(like='6422_1040').shift(-2),
-
         # Værnes
         df_tek['DNMI_69100...........T0015A3-0120'],
         df_arome['/arome_windvel_6347_1092'],
@@ -295,7 +291,7 @@ def generate_bessaker_dataset_single_target(tek_path, arome_path):
     ], axis=1).iloc[:-2, :]
 
 
-def generate_bessaker_large_dataset(tek_path):
+def generate_bessaker_large_dataset_scratch(tek_path):
     try:
 
         WindSpeedNacelleBessaker_path = os.path.join(
@@ -405,4 +401,61 @@ def generate_bessaker_large_dataset(tek_path):
         df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].shift(-2).rename(
             'Target', inplace=True),
 
+    ], axis=1).iloc[:-2, :]
+
+
+def generate_bessaker_large_dataset(tek_path):
+    try:
+
+        df_tek = pd.read_csv(os.path.join(tek_path), sep=';', header=0,
+                             decimal='.', low_memory=False)
+
+    except:
+        print('No data found on: ' + tek_path)
+        exit(1)
+
+    return pd.concat([
+
+        # Bessaker molle produksjon
+        df_tek.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1),
+
+        # Bessaker mølle vindhastighet (nacelle)
+        df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
+
+        # Nose heading
+        df_tek.filter(regex='BESS-BessakerfNP-V*', axis=1)
+
+        # Mølle status
+        df_tek.filter(regex='RRS.S2464.Gunit.M1-7*', axis=1)
+
+        # Air temperature forecast (på skomakerfjellet)
+
+        df_tek['/SKOM-SfjHydLt30mMid-T0018A3 -0114']
+
+        ###############################################
+        #           Værstasjoner                      #
+        ###############################################
+
+        # Værnes
+        df_tek['DNMI_69100...........T0015A3-0120'],
+
+        # ØRLAND III (Koordinater: 63.705, 9.611)
+        df_tek['DNMI_71550...........T0015A3-0120'],
+
+        # HALTEN FYR ( Kordinater: 64.173, 9.405 )
+        df_tek['DNMI_71850...........T0015A3-0120'],
+
+        # BUHOLMRÅSA FYR (kordinater: 64.401, 10.455)
+        df_tek['DNMI_71990...........T0015A3-0120'],
+
+        # NAMSOS LUFTHAVN (Koordinater: 64.471, 11.571)
+        df_tek['DNMI_72580...........T0015A3-0120'],
+
+        # Storm måling vindhastighet og retning
+        df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
+
+        # Sum produksjon
+        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'],
+        df_tek['BESS-Bessakerfj.-GS-T4015A3 -0104'].astype(
+            'd').shift(-2).rename('Target', inplace=True),
     ], axis=1).iloc[:-2, :]

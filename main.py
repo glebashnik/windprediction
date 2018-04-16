@@ -13,7 +13,7 @@ from util.data_analysis import *
 # from models.simple_lstm.main import RNN as LSTM
 # from models.lstm_stateful.main import RNN as StatefulLSTM
 from models.simple_ann.main import NN
-from models.dense_nn_forest.NN_forest import NN_forest
+from models.Dense_NN_Forest.NN_forest import NN_forest
 from models.ann_error_feedback.ann_feedback import NN_feedback
 from models.nn_dual_loss.nn_dual_loss import NN_dual
 
@@ -22,6 +22,12 @@ from models.random_forest.main import RandomForest
 
 import h5py
 
+tek_path = os.path.join('data/raw', 'vindkraft 130717-160218 TEK met.csv')
+arome_path = os.path.join(
+    'data/raw', 'vindkraft 130717-160218 arome korr winddir.csv')
+modelpath = os.path.join('checkpoint_model.h5')
+
+dataset = generate_bessaker_delta_target_dataset(tek_path, arome_path)
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
