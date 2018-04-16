@@ -27,19 +27,18 @@ import h5py
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-park = 'Bessaker Vindpark'
+park = 'Bessaker large'
 
-datapath = os.path.join('data', park,
-                        'data_bessaker_advanced.csv')
+datapath = os.path.join('data', park)
 
 tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
 arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
 model_path = os.path.join('checkpoint_model.h5')
 
 # dataset = generate_bessaker_dataset(tek_path, arome_path)
-dataset = generate_bessaker_dataset_extra(tek_path, arome_path)
+# dataset = generate_bessaker_dataset_extra(tek_path, arome_path)
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
-
+dataset = generate_bessaker_large_dataset(datapath)
 
 # # Extracting indices of most important features
 # dataset = dataset.drop(['BESS-Bessakerfj.-GS-T4015A3 -0104'], axis=1)
