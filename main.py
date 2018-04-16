@@ -47,7 +47,7 @@ model_path = os.path.join('checkpoint_model.h5')
 tek_out_path = os.path.join('data', 'tek_out.csv')
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 
-dataset = generate_bessaker_large_dataset(tek_out_path, history_length=10)
+dataset = generate_bessaker_large_dataset(tek_out_path, history_length=48)
 dataset = dataset.dropna()
 
 
@@ -75,7 +75,7 @@ print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 testsplit = 0.7
 look_back = 6
 look_ahead = 1
-epochs = 2000
+epochs = 5000
 batch_size = 64
 lr = 0.001
 decay = 1e-6
@@ -210,7 +210,7 @@ def execute_random_forest(dataset, notes):
     # Creates model, trains the network and saves the evaluation in a txt file.
     # Requires a specified network and training hyperparameters
 
-def execute_conv_network(dataset, note):
+def execute_conv_network(dataset, note, write_log=False):
 
     # Dette ble kjempe stykt, bare å si fra om noen kan en god løsning på dette
     x_prod_train, x_rest_train, x_prod_test, x_rest_test, y_train, y_test = process_dataset_conv_nn(dataset, production_col_name='Produksjon')
@@ -218,19 +218,16 @@ def execute_conv_network(dataset, note):
     history_length = np.shape(x_prod_train)[1]
     rest_input_dim = x_rest_train.shape[1]
 
-    network = Conv_NN(epochs=epochs, batch_size=batch_size)
+    network = Conv_NN(epochs=epochs, batch_size=batch_size, model_path=model_path,)
 
     model_architecture = network.build_model(history_length, rest_input_dim)
     model_architecture.summary()
 
-    hist_loss, model = network.train_network(x_prod_train, x_rest_train, y_train, opt=opt)
+    model = network.train_network(x_prod_train, x_rest_train, y_train, opt=opt)
 
     evaluation, metric_names = network.evaluate(
         x_prod_test, x_rest_test, y_test)
 
-    if write_log:
-        write_results(park, model_architecture, note, num_features,
-                      hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
     # Creates model, trains the network and saves the evaluation in a txt file.
     # Requires a specified network and training hyperparameters
 
@@ -263,4 +260,4 @@ def execute_conv_network(dataset, note):
 # execute_network_advanced(
 #     dataset, 'Training on feature importance adv dataset', layers[1], epochs, write_log=True)
 
-execute_conv_network(dataset, 'Conv network')
+execute_conv_network(dataset, 'Conv network', write_log=True)

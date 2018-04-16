@@ -12,28 +12,38 @@ from keras.models import Model
 from keras import optimizers
 from keras.callbacks import EarlyStopping,ModelCheckpoint
 from sklearn.preprocessing import MinMaxScaler
-from keras.regularizers import l2
+from keras.regularizers import l2, l1
 
 class Conv_NN:
 
-    def __init__(self, batch_size=32, epochs=100):
+    def __init__(self, model_path, batch_size=32, epochs=100):
         self.batch_size = batch_size
         self.epochs = epochs
+        self.model_path = model_path
 
     def build_model(self, history_length, rest_input_dim, l2_reg=0):
         
         production_input = Input(shape=(history_length, 1), name='production_input')
 
-        prod_conv = Conv1D(filters=5, kernel_size=5, activation='relu', activity_regularizer = l2(l2_reg))(production_input)
-        prod_pool = MaxPool1D(pool_size=2)(prod_conv)
+        prod_conv = Conv1D(filters=10, kernel_size=3, activation='relu',
+                activity_regularizer=l1(0.001))(production_input)
+        prod_pool = AveragePooling1D(pool_size=2)(prod_conv)
+        prod_conv = Conv1D(filters=5, kernel_size=2, activation='relu',
+                activity_regularizer=l1(0.001))(prod_pool)
+        prod_pool = AveragePooling1D(pool_size=2)(prod_conv)
+
         flat = Flatten()(prod_pool)
 
         rest_input = Input(shape=(rest_input_dim,), name='rest_input')
 
         total_input = concatenate([flat, rest_input])
-        x = Dense(64, activation='relu', activity_regularizer = l2(l2_reg))(total_input)
-        x = Dense(32, activation='relu', activity_regularizer = l2(l2_reg))(x)
-        x = Dense(16, activation='relu', activity_regularizer = l2(l2_reg))(x)
+        x = Dense(64, activation='relu',
+                activity_regularizer=l1(0.001))(total_input)
+        x = Dense(32, activation='relu',
+                activity_regularizer=l1(0.001))(x)
+        x = Dense(16, activation='relu')(x)
+        x = Dense(8, activation='relu')(x)
+        x = Dense(2, activation='relu')(x)
         output = Dense(1)(x)
 
         self.model = Model(inputs=[production_input, rest_input], outputs=[output])
@@ -51,9 +61,11 @@ class Conv_NN:
                         batch_size=self.batch_size, validation_split=0.2, callbacks=[early_stopping, checkpoint],
                         epochs = self.epochs, verbose=2, shuffle=True)
 
-    def evaluate(self, model_path, x_prod_test, x_rest_test, y_test):
+        return self.model
+
+    def evaluate(self, x_prod_test, x_rest_test, y_test):
         self.model.compile(loss='mae', optimizer='adam',metrics=['mae','mse',self.rmse])
-        self.model.load_weights(model_path)
+        self.model.load_weights(self.model_path)
         
         evaluation = self.model.evaluate([x_prod_test, x_rest_test], y_test)
         return evaluation, self.model.metrics_names

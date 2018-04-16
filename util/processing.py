@@ -44,6 +44,7 @@ def production_history_data_split(data, production_col_name='Produksjon'):
     production_data = data.filter(regex=production_col_name, axis=1).as_matrix()
     production_data = np.expand_dims(production_data, axis=2)
     rest_data = data.filter(regex='^(?!{})'.format(production_col_name), axis=1)
+    rest_data = concat([rest_data, data.filter(regex='{}-0'.format(production_col_name))], axis=1)
 
     return production_data, rest_data
 
