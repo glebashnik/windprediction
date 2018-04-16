@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class RandomForest:
+class RandomForest_featureimportance:
 
     def __init__(self, features):
         self.features = features

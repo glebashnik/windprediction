@@ -338,7 +338,10 @@ def generate_bessaker_large_dataset_scratch(tek_path):
         print('No data found on: ' + tek_path)
         exit(1)
 
+    # windspeedmeasure.info()
+    # exit(0)
     windspeedmeasure.head()
+    windspeedmeasure['ExcelDato'].head()
     exit(0)
 
     merged = WindSpeedNacelleBessaker.merge(
@@ -423,14 +426,14 @@ def generate_bessaker_large_dataset(tek_path):
         df_tek.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
 
         # Nose heading
-        df_tek.filter(regex='BESS-BessakerfNP-V*', axis=1)
+        df_tek.filter(regex='BESS-BessakerfNP-V*', axis=1),
 
         # Mølle status
-        df_tek.filter(regex='RRS.S2464.Gunit.M1-7*', axis=1)
+        df_tek.filter(regex='RRS.S2464.Gunit.M1-7*', axis=1),
 
         # Air temperature forecast (på skomakerfjellet)
 
-        df_tek['/SKOM-SfjHydLt30mMid-T0018A3 -0114']
+        df_tek['/SKOM-SfjHydLt30mMid-T0018A3 -0114'],
 
         ###############################################
         #           Værstasjoner                      #

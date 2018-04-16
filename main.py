@@ -13,7 +13,7 @@ from util.data_analysis import *
 # from models.simple_lstm.main import RNN as LSTM
 # from models.lstm_stateful.main import RNN as StatefulLSTM
 from models.simple_ann.main import NN
-from models.Dense_NN_Forest.NN_forest import NN_forest
+from models.dense_nn_forest.NN_forest import *
 from models.ann_error_feedback.ann_feedback import NN_feedback
 from models.nn_dual_loss.nn_dual_loss import NN_dual
 
@@ -27,24 +27,24 @@ arome_path = os.path.join(
     'data/raw', 'vindkraft 130717-160218 arome korr winddir.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
-dataset = generate_bessaker_delta_target_dataset(tek_path, arome_path)
+# dataset = generate_bessaker_large_dataset_scratch(
+#     os.path.join('data', 'Bessaker large'))
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-park = 'Bessaker large'
+# park = 'Bessaker large'
 
-datapath = os.path.join('data', park)
+# datapath = os.path.join('data', park)
 
 tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
 arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
 model_path = os.path.join('checkpoint_model.h5')
 
-# dataset = generate_bessaker_dataset(tek_path, arome_path)
-# dataset = generate_bessaker_dataset_extra(tek_path, arome_path)
+dataset = generate_bessaker_dataset(tek_path, arome_path)
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
-dataset = generate_bessaker_large_dataset(datapath)
+# dataset = generate_bessaker_large_dataset(datapath)
 
 # # Extracting indices of most important features
 # dataset = dataset.drop(['BESS-Bessakerfj.-GS-T4015A3 -0104'], axis=1)
@@ -79,23 +79,23 @@ print('Data loaded with {} atributes\n'.format(len(dataset.columns)))
 opt = [
     # optimizers.SGD(lr=lr, decay=decay, momentum=momentum, nesterov=True),
     # optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.0),
-    #'rmsprop',
+    # 'rmsprop',
     'adam'
 ]
 
 opt_name = [
-    #'SGD lr: {} decay: {} momentum: {} '.format(lr,decay,momentum),
-    #'Adam lr: {} decay: {} '.format(lr,momentum),
-    #'rmsprop',
+    # 'SGD lr: {} decay: {} momentum: {} '.format(lr,decay,momentum),
+    # 'Adam lr: {} decay: {} '.format(lr,momentum),
+    # 'rmsprop',
     'adam'
 ]
 
 # Define networks, domensions: (models,networks,layers)
 best_network = [
-    [(32, False), (16, False), (8, False), (2, False)],
-    [(128, False), (64, False), (32, False), (8, False)],
-    [(64, False), (16, False), (6, False), (0, False)],
-    [(16, False), (8, False), (8, False), (0, False)],
+    [(32, False), (16, False), (8, True), (2, False)],
+    [(128, False), (64, True), (32, False), (8, False)],
+    [(64, False), (16, False), (6, True), (0, False)],
+    [(16, False), (8, False), (8, True), (0, False)],
 ]
 
 network_forest = [
@@ -154,6 +154,7 @@ def execute_network_advanced(dataset, note, layers, epochs, dropoutrate=0.3, opt
                       dropoutrate=dropoutrate)
     model_architecture = network.build_forest_model(
         input_dim=num_features, model_structure=layers)
+    model_architecture.summary()
 
     hist_loss, model = network.train_network(
         x_train=x_train, y_train=y_train, opt=opt)
@@ -165,14 +166,42 @@ def execute_network_advanced(dataset, note, layers, epochs, dropoutrate=0.3, opt
         write_results(park, model_architecture, note, num_features,
                       hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
 
-# Creates model, trains the network and saves the evaluation in a txt file.
-# Requires a specified network and training hyperparameters
+
+def execute_random_forest(dataset, notes):
+
+    x_train, x_test, y_train, y_test = process_dataset_nn(
+        dataset, testsplit=testsplit)
+
+    num_features = x_train.shape[1]
+    num_targets = y_train.shape[1]
+
+    network = RandomForest_featureimportance(model_path=model_path, batch_size=32, epochs=epochs,
+                                             dropoutrate=dropoutrate)
+
+    model_architecture = network.build_forest_model(
+        input_dim=num_features, model_structure=layers)
+    model_architecture.summary()
+
+    hist_loss, model = network.train_network(
+        x_train=x_train, y_train=y_train, opt=opt)
+
+    evaluation, metric_names = network.evaluate(
+        x_test, y_test, single_targets=False)
+
+    if write_log:
+        write_results(park, model_architecture, note, num_features,
+                      hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
+    # Creates model, trains the network and saves the evaluation in a txt file.
+    # Requires a specified network and training hyperparameters
+
+
+execute_network_advanced(
+    dataset, 'training on network forest', best_network, epochs, write_log=True)
 
 
 execute_network_simple(
-    dataset, 'Regular network, dataset advanced', epochs, write_log=True, single_targets=False)
-execute_network_advanced(
-    dataset, 'training on network forest', best_network, epochs, write_log=True)
+    dataset, 'Regular network, large bessaker dataset', epochs, write_log=True, single_targets=False)
+
 execute_network_advanced(
     dataset, 'training on network forest', network_forest, epochs, write_log=True)
 exit(0)
