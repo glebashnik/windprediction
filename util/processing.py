@@ -38,8 +38,27 @@ def process_dataset_nn(dataset, testsplit=0.8, pca=False):
     if pca:
         data_x = extract_PCA_features(data_x, n_components=40)
     x_train, x_test, y_train, y_test = train_test_split(
-        data_x, data_y, test_size=1-testsplit, random_state=13)
+        data_x, data_y, test_size=1-testsplit, random_state=1745)
 
+def production_history_data_split(data, production_col_name='Produksjon'):
+    production_data = data.filter(regex=production_col_name, axis=1).as_matrix()
+    production_data = np.expand_dims(production_data, axis=2)
+    rest_data = data.filter(regex='^(?!{})'.format(production_col_name), axis=1)
+
+    return production_data, rest_data
+
+def process_dataset_conv_nn(dataset, production_col_name='Produksjon', testsplit=0.8):
+    data_x, data_y = feature_target_split(dataset)
+
+    production_data, rest_data = production_history_data_split(data_x, production_col_name)
+
+    x_prod_train, x_prod_test, y_train, y_test = train_test_split(
+        production_data, data_y, test_size=1-testsplit, random_state=1745)
+
+    x_rest_train, x_rest_test, y_train, y_test = train_test_split(
+        rest_data, data_y, test_size=1-testsplit, random_state=1745)
+
+    return x_prod_train, x_rest_train, x_prod_test, x_rest_test, y_train, y_test
 
 def process_dataset_nn(dataset, testsplit=0.8, pca=False, single_targets=False):
     if not single_targets:

@@ -407,7 +407,7 @@ def generate_bessaker_large_dataset_scratch(tek_path):
     ], axis=1).iloc[:-2, :]
 
 
-def generate_bessaker_large_dataset(tek_path):
+def generate_bessaker_large_dataset(tek_path, history_length=1):
     try:
 
         df_tek = pd.read_csv(os.path.join(tek_path), sep=';', header=0,
@@ -416,6 +416,12 @@ def generate_bessaker_large_dataset(tek_path):
     except:
         print('No data found on: ' + tek_path)
         exit(1)
+
+    # Creates 'history_length' columns of production history
+    df_production_history = df_tek['/TS-Straum066_BessVind_Inn'].rename('Produksjon-{}-Timer-Siden'.format(0), inplace=True)
+    for i in range(1,history_length):
+        df_production_history = pd.concat([df_production_history, df_tek['/TS-Straum066_BessVind_Inn'].astype(
+            'd').shift(i).rename('Produksjon-{}-Timer-Siden'.format(i), inplace=True)], axis=1)
 
     return pd.concat([
 
@@ -458,7 +464,7 @@ def generate_bessaker_large_dataset(tek_path):
         df_tek.filter(like='STORM-Bess', axis=1).shift(-2),
 
         # Sum produksjon
-        df_tek['/TS-Straum066_BessVind_Inn'],
+        df_production_history,
         df_tek['/TS-Straum066_BessVind_Inn'].astype(
             'd').shift(-2).rename('Target', inplace=True),
     ], axis=1).iloc[:-2, :]
