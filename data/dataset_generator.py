@@ -423,6 +423,9 @@ def generate_bessaker_large_dataset(tek_path, history_length=1):
         df_production_history = pd.concat([df_production_history, df_tek['/TS-Straum066_BessVind_Inn'].astype(
             'd').shift(i).rename('Produksjon-{}-Timer-Siden'.format(i), inplace=True)], axis=1)
 
+    # df_production_history_copy = df_production_history.shift(2)
+    # df_production_history = df_production_history-df_production_history_copy
+
     return pd.concat([
 
         # Bessaker molle produksjon
@@ -465,6 +468,7 @@ def generate_bessaker_large_dataset(tek_path, history_length=1):
 
         # Sum produksjon
         df_production_history,
-        df_tek['/TS-Straum066_BessVind_Inn'].astype(
-            'd').shift(-2).rename('Target', inplace=True),
+        (df_tek['/TS-Straum066_BessVind_Inn'].astype(
+            'd').shift(-2) - df_tek['/TS-Straum066_BessVind_Inn'].astype(
+            'd')).rename('Target', inplace=True)
     ], axis=1).iloc[:-2, :]

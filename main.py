@@ -47,7 +47,7 @@ model_path = os.path.join('checkpoint_model.h5')
 tek_out_path = os.path.join('data', 'tek_out.csv')
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 
-dataset = generate_bessaker_large_dataset(tek_out_path, history_length=48)
+dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)
 dataset = dataset.dropna()
 
 
@@ -227,6 +227,7 @@ def execute_conv_network(dataset, note, write_log=False):
 
     evaluation, metric_names = network.evaluate(
         x_prod_test, x_rest_test, y_test)
+    print(evaluation)
 
     # Creates model, trains the network and saves the evaluation in a txt file.
     # Requires a specified network and training hyperparameters
