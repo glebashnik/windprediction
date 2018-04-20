@@ -17,6 +17,7 @@ from models.simple_ann.main import NN
 from models.dense_nn_forest.NN_forest import *
 from models.ann_error_feedback.ann_feedback import NN_feedback
 from models.nn_dual_loss.nn_dual_loss import NN_dual
+from models.lstm_stateful.main import RNN
 
 # from keras import optimizers
 from models.random_forest.random_forest import RandomForest
@@ -74,7 +75,7 @@ print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 testsplit = 0.7
 look_back = 6
 look_ahead = 1
-epochs = 500
+epochs = 2000
 batch_size = 64
 lr = 0.001
 decay = 1e-6
@@ -127,6 +128,8 @@ network_forest = [
 
 feedback_network = [(32, False), (16, True), (8, False), (2, False)]
 dropouts = [0.2, 0.3, 0.4, 0.5]
+
+lstm_layers = [64, 32, 16, 8]
 
 
 def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', write_log=False, single_targets=False):
@@ -183,6 +186,30 @@ def execute_network_advanced(dataset, note, layers, epochs, dropoutrate=0.3, opt
                       hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
 
 
+def execute_network_lstm(dataset, note, layers, epochs, dropoutrate=0.3, opt='adam', write_log=False):
+
+    x_train, x_test, y_train, y_test = process_dataset_lstm(
+        dataset, look_back=6, look_ahead=1, testsplit=testsplit, stateful=True, batch_size=batch_size)
+
+    input_shape = x_train.shape[1:]
+    num_features = x_train.shape[2]
+
+    lstm_network = RNN(batch_size, epochs)
+
+    model_architecture = lstm_network.build_model_general(
+        input_shape=input_shape, layers=layers)
+
+    lstm_network.train_network(
+        x_train=x_train, y_train=y_train)
+
+    evaluation, metric_names = lstm_network.evaluate(
+        x_test, y_test)
+
+    if write_log:
+        write_results(park, model_architecture, note, num_features,
+                      None, evaluation, metric_names, epochs, opt, dropoutrate, ahed=1, back=6)
+
+
 def execute_random_forest(dataset, notes):
 
     x_train, x_test, y_train, y_test = process_dataset_nn(
@@ -201,7 +228,13 @@ def execute_random_forest(dataset, notes):
 
     # Creates model, trains the network and saves the evaluation in a txt file.
     # Requires a specified network and training hyperparameters
+# dataset = feature_importance(
+#     dataset, scope=3000, num_features=48, print_=True)
+# exit(0)
 
+
+execute_network_lstm(
+    dataset, 'Training lstm network on large dataset, stateful', lstm_layers, epochs, write_log=True)
 
 execute_network_advanced(
     dataset, 'training huge network forest full dataset 38700', network_forest, epochs, write_log=True)
@@ -218,8 +251,6 @@ exit(0)
 execute_network_advanced(
     dataset, 'training on network forest', network_forest, epochs, write_log=True)
 
-dataset = feature_importance(
-    dataset, scope=3000, num_features=48, print_=False)
 
 execute_network_simple(
     dataset, 'Training on feature importance adv dataset', epochs, write_log=True)
