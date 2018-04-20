@@ -1,0 +1,8 @@
+
+Bessaker Vindpark
+
+Optimizer: adam
+Dropoutrate: 0
+Trained 5000 epochs
+mean_absolute_error test evaluation
+3.481262742019281
