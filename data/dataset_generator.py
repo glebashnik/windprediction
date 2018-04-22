@@ -418,8 +418,9 @@ def generate_bessaker_large_dataset(tek_path, history_length=1):
         exit(1)
 
     # Creates 'history_length' columns of production history
-    df_production_history = df_tek['/TS-Straum066_BessVind_Inn'].rename('Produksjon-{}-Timer-Siden'.format(0), inplace=True)
-    for i in range(1,history_length):
+    df_production_history = df_tek['/TS-Straum066_BessVind_Inn'].rename(
+        'Produksjon-{}-Timer-Siden'.format(0), inplace=True)
+    for i in range(1, history_length):
         df_production_history = pd.concat([df_production_history, df_tek['/TS-Straum066_BessVind_Inn'].astype(
             'd').shift(i).rename('Produksjon-{}-Timer-Siden'.format(i), inplace=True)], axis=1)
 
@@ -471,4 +472,108 @@ def generate_bessaker_large_dataset(tek_path, history_length=1):
         (df_tek['/TS-Straum066_BessVind_Inn'].astype(
             'd').shift(-2) - df_tek['/TS-Straum066_BessVind_Inn'].astype(
             'd')).rename('Target', inplace=True)
+    ], axis=1).iloc[:-2, :]
+
+
+def Bessaker_dataset(data_path):
+    try:
+        df = pd.read_csv(data_path, sep=';', header=0,
+                         decimal=',', low_memory=False)
+    except:
+        print('No data found on: ' + tek_path)
+        exit(1)
+
+    return pd.concat([
+
+        # Produksjon Bessaker
+        df.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1),
+        # Nacelle
+        df.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
+
+        # Skomaker stasj
+        df.filter(like='SKOM', axis=1),
+
+        # Værnes
+        # df['DNMI_69100...........T0015A3-0120'],
+        # Alle værstasjoner med alle målinger
+        df.filter(like='DNMI', axis=1),
+
+        # ØRLAND III (Koordinater: 63.705, 9.611)
+        # df['DNMI_71550...........T0015A3-0120'],
+
+        # HALTEN FYR ( Kordinater: 64.173, 9.405 )
+        # df['DNMI_71850...........T0015A3-0120'],
+
+        # BUHOLMRÅSA FYR (kordinater: 64.401, 10.455)
+        # df['DNMI_71990...........T0015A3-0120'],
+
+        # NAMSOS LUFTHAVN (Koordinater: 64.471, 11.571)
+        # df['DNMI_72580...........T0015A3-0120'],
+
+        # Arome values
+        df.filter(like='arome_wind', axis=1),
+
+        # Arome airtemp
+        df.filter(like='arome_airtemp', axis=1),
+
+        # Storm vind måling
+        df.filter(like='STORM-Bess', axis=1).shift(-2),
+
+        # Sum produksjon
+        df['TS-Straum066_BessVind_Inn'],
+        df['Target'].astype('d')
+    ], axis=1).iloc[:-2, :]
+
+
+def Valsnes_dataset(data_path):
+    try:
+        df = pd.read_csv(data_path, sep=';', header=0,
+                         decimal=',', low_memory=False)
+    except:
+        print('No data found on: ' + tek_path)
+        exit(1)
+
+    # with open('features.txt', 'w') as f:
+    #     [f.write(column + '\n') for column in df.columns]
+
+    return pd.concat([
+
+        # Produksjon o.l. Valsnes
+        df.filter(like='VALS', axis=1),
+        # Nacelle
+        df.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
+
+        # Skomaker stasj
+        df.filter(like='SKOM', axis=1),
+
+        # Værnes
+        # df['DNMI_69100...........T0015A3-0120'],
+        # Alle værstasjoner med alle målinger
+        df.filter(like='DNMI', axis=1),
+
+        # ØRLAND III (Koordinater: 63.705, 9.611)
+        # df['DNMI_71550...........T0015A3-0120'],
+        df.filter(like='DNMI_71550',axis=1),
+
+        # HALTEN FYR ( Kordinater: 64.173, 9.405 )
+        # df['DNMI_71850...........T0015A3-0120'],
+
+        # BUHOLMRÅSA FYR (kordinater: 64.401, 10.455)
+        # df['DNMI_71990...........T0015A3-0120'],
+
+        # NAMSOS LUFTHAVN (Koordinater: 64.471, 11.571)
+        # df['DNMI_72580...........T0015A3-0120'],
+
+        # Arome values
+        # df.filter(like='arome_wind', axis=1),
+
+        # Arome airtemp
+        # df.filter(like='arome_airtemp', axis=1),
+
+        # Storm vind måling
+        df.filter(like='STORM-Vals', axis=1).shift(-2),
+
+        # Sum produksjon
+        df['TS-Straum066_BessVind_Inn'],
+        df['Target'].astype('d')
     ], axis=1).iloc[:-2, :]

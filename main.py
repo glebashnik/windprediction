@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 import datetime
+import h5py
 
 import xgboost as xgb
 
@@ -19,7 +20,10 @@ from models.simple_ann.main import NN
 from models.dense_nn_forest.NN_forest import *
 from models.ann_error_feedback.ann_feedback import NN_feedback
 from models.nn_dual_loss.nn_dual_loss import NN_dual
+from models.lstm_stateful.main import RNN
+from models.lstm_stateful.main import RNN
 from models.conv_nn.conv_nn import Conv_NN
+
 
 # from keras import optimizers
 from models.random_forest.random_forest import RandomForest
@@ -31,15 +35,15 @@ arome_path = os.path.join(
     'data/raw', 'vindkraft 130717-160218 arome korr winddir.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
-# dataset = generate_bessaker_large_dataset_scratch(
-#     os.path.join('data', 'Bessaker large'))
+park = 'Bessaker large'
+latest_scream_dataset_path = os.path.join(
+    'data', park, 'dataset_20130818-20180420.csv')
+# dataset = Bessaker_dataset(latest_scream_dataset_path)
+dataset = Valsnes_dataset(latest_scream_dataset_path)
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-park = 'Bessaker large'
-
 # datapath = os.path.join('data', park)
 
 tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
@@ -49,8 +53,8 @@ model_path = os.path.join('checkpoint_model.h5')
 tek_out_path = os.path.join('data', 'tek_out.csv')
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 
-dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)
-dataset = dataset.dropna()
+# dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)
+# dataset = dataset.dropna()
 
 
 # dataset = generate_bessaker_large_dataset(datapath)
@@ -83,15 +87,34 @@ lr = 0.001
 decay = 1e-6
 momentum = 0.9
 
+######################################
 
-print('Beginning model training on the path: {}'.format(model_path))
-print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
+
+# print('Beginning model training on the path: {}'.format(model_path))
+# print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
 
 # Dense
 # x_train, x_test, y_train, y_test = process_dataset_nn(
 #     dataset,
 #     testsplit=testsplit
 # )
+
+
+def visualize_training_buckets(file_path):
+
+    history = h5py.File(file_path, 'r')
+
+    buckets = history['buckets'].value
+    evaluations = history['evaluations'].value
+
+    plt.plot(buckets[1:], evaluations[1:], 'bo')
+    plt.title('Network training loss for different dataset sizes')
+    plt.ylabel('MAE')
+    plt.xlabel('Dataset sizes')
+    # plt.legend(metrics, loc='upper right')
+    # if (start != None) and (end != None):
+    #     plt.xlim(start, end)
+    plt.show()
 
 
 opt = [
@@ -131,34 +154,36 @@ network_forest = [
 feedback_network = [(32, False), (16, True), (8, False), (2, False)]
 dropouts = [0.2, 0.3, 0.4, 0.5]
 
+lstm_layers = [64, 32, 16, 8]
 
-def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', write_log=False, single_targets=False):
+
+def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', write_log=False):
 
     x_train, x_test, y_train, y_test = process_dataset_nn(
-        dataset, testsplit=testsplit, single_targets=single_targets)
+        dataset, testsplit=testsplit)
 
     num_features = x_train.shape[1]
     num_targets = y_train.shape[1]
 
+    print('Training with {} features'.format(num_features))
+
     network = NN_dual(model_path=model_path, batch_size=32, epochs=epochs,
                       dropoutrate=dropoutrate)
 
-    if not single_targets:
-        model_architecture = network.build_model(
-            input_dim=num_features, output_dim=num_targets)
-        model_architecture.summary()
-    else:
-        model_architecture = network.build_model_single_targets(
-            input_dim=num_features, output_dim=num_targets)
+    model_architecture = network.build_model(
+        input_dim=num_features, output_dim=num_targets)
+    model_architecture.summary()
 
     hist_loss, model = network.train_network(
         x_train=x_train, y_train=y_train, opt=opt)
 
-    evaluation, metric_names = network.evaluate(x_test, y_test, single_targets)
+    evaluation, metric_names = network.evaluate(x_test, y_test)
 
     if write_log:
         write_results(park, model_architecture, note, num_features,
                       hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
+
+    return evaluation
 
 
 def execute_network_advanced(dataset, note, layers, epochs, dropoutrate=0.3, opt='adam', write_log=False):
@@ -186,6 +211,30 @@ def execute_network_advanced(dataset, note, layers, epochs, dropoutrate=0.3, opt
                       hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
 
 
+def execute_network_lstm(dataset, note, layers, epochs, dropoutrate=0.3, opt='adam', write_log=False):
+
+    x_train, x_test, y_train, y_test = process_dataset_lstm(
+        dataset, look_back=6, look_ahead=1, testsplit=testsplit, stateful=True, batch_size=batch_size)
+
+    input_shape = x_train.shape[1:]
+    num_features = x_train.shape[2]
+
+    lstm_network = RNN(batch_size, epochs)
+
+    model_architecture = lstm_network.build_model_general(
+        input_shape=input_shape, layers=layers)
+
+    lstm_network.train_network(
+        x_train=x_train, y_train=y_train)
+
+    evaluation, metric_names = lstm_network.evaluate(
+        x_test, y_test)
+
+    if write_log:
+        write_results(park, model_architecture, note, num_features,
+                      None, evaluation, metric_names, epochs, opt, dropoutrate, ahed=1, back=6)
+
+
 def execute_random_forest(dataset, notes):
 
     x_train, x_test, y_train, y_test = process_dataset_nn(
@@ -202,8 +251,6 @@ def execute_random_forest(dataset, notes):
 
     print('Test evaluation on random forest: {}'.format(evaluation))
 
-    # Creates model, trains the network and saves the evaluation in a txt file.
-    # Requires a specified network and training hyperparameters
 
 def execute_xgb(dataset, notes):
     x_train, x_test, y_train, y_test = process_dataset_nn(
@@ -247,7 +294,7 @@ def execute_conv_network(dataset, note, write_log=False):
     # Requires a specified network and training hyperparameters
 
 
-# ========== Comment in the model you want to run here ==========   
+# ========== Comment in the model you want to run here ==========
 # execute_network_simple(
 #     dataset, 'Training with 38700 samples', epochs, write_log=True, single_targets=False)
 
@@ -260,12 +307,40 @@ def execute_conv_network(dataset, note, write_log=False):
 # execute_network_advanced(
 #     dataset, 'training on network forest', best_network, epochs, write_log=True)
 
+# execute_network_advanced(
+    # dataset, 'training best network forest, only 38700', best_network, epochs, write_log=True)
+
+# visualize_training_buckets('training_data_buckets_1st_2000e.hdf5')
+
+evaluation = execute_network_simple(
+    dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
+exit(0)
+data_buckets = [200, 500, 1000, 2000,
+                4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
+evaluation_list = []
+for i, bucket in enumerate(data_buckets):
+    subdataset = dataset[0:bucket]
+
+    print(subdataset.shape[0])
+
+    evaluation = execute_network_simple(
+        subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True)
+
+    evaluation_list.append(evaluation[0])
+
+with h5py.File('large test buckets.hdf5', 'w') as f:
+    print('Saving all model evaluations in h5 file')
+    f.create_dataset('buckets', data=data_buckets)
+    f.create_dataset('evaluations', data=evaluation_list)
+
+exit(0)
 
 # execute_network_advanced(
 #     dataset, 'training on network forest', network_forest, epochs, write_log=True)
 
 # dataset = feature_importance(
 #     dataset, scope=3000, num_features=48, print_=False)
+
 
 # execute_network_simple(
 #     dataset, 'Training on feature importance adv dataset', epochs, write_log=True)

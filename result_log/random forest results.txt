@@ -1,0 +1,10 @@
+
+[Parallel(n_jobs=2)]: Done  46 tasks      | elapsed: 61.9min
+[Parallel(n_jobs=2)]: Done 196 tasks      | elapsed: 208.8min
+[Parallel(n_jobs=2)]: Done 446 tasks      | elapsed: 403.8min
+[Parallel(n_jobs=2)]: Done 500 out of 500 | elapsed: 445.9min finished
+[Parallel(n_jobs=2)]: Done  46 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=2)]: Done 196 tasks      | elapsed:    0.3s
+[Parallel(n_jobs=2)]: Done 446 tasks      | elapsed:    0.8s
+[Parallel(n_jobs=2)]: Done 500 out of 500 | elapsed:    0.9s finished
+Test evaluation on random forest: 4.563635223361185

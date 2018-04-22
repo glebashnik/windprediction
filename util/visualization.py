@@ -1,6 +1,8 @@
-import matplotlib.pyplot as plt
-import h5py
 import os
+import sys
+# import matplotlib.pyplot as plt
+# import h5py
+# import numpy as np
 
 
 # def compare_predictions(self, x, y):
@@ -36,12 +38,31 @@ def visualize_loss_history(network_sample, start=None, end=None):
     plt.show()
 
 
-if __name__ == '__main__':
+def visualize_training_buckets(file_path):
 
+    history = h5py.File(file_path, 'r')
+
+    buckets = history['buckets'].value
+    evaluations = history['buckets'].value
+
+    plt.plot(buckets, evaluations, 'bo')
+    plt.title('Network training loss for different dataset sizes')
+    plt.ylabel('MAE')
+    plt.xlabel('Dataset sizes')
+    # plt.legend(metrics, loc='upper right')
+    # if (start != None) and (end != None):
+    #     plt.xlim(start, end)
+    plt.show()
+
+
+if __name__ == '__main__':
+    print('Visualization script')
+    exit(0)
     try:
         network = sys.argv[1]
     except IndexError:
         print('no network given')
         network = 'M04-D16_h18-m03-s37'
 
-    visualize_loss_history(network)
+    # visualize_loss_history(network)
+    # visualize_training_buckets(os.path.join('..','training_data_buckets.hdf5'))

@@ -26,9 +26,10 @@ def write_results(park, model_arch, note, num_features, hist_loss, results, metr
         basename, 'checkpoint_model.h5'))
 
     # Save loss history as h5 file
-    with h5py.File(log_name_h5, 'w') as hf:
-        hf.create_dataset('mae_loss', data=hist_loss['loss'])
-        hf.create_dataset('mae_val_loss', data=hist_loss['val_loss'])
+    if not hist_loss == None:
+        with h5py.File(log_name_h5, 'w') as hf:
+            hf.create_dataset('mae_loss', data=hist_loss['loss'])
+            hf.create_dataset('mae_val_loss', data=hist_loss['val_loss'])
 
     # Save hyperparameter info (and what not) in txt file
     print()
@@ -56,7 +57,8 @@ def write_results(park, model_arch, note, num_features, hist_loss, results, metr
 
     logfile.write('{} training loss\n'.format(metrics[-1]))
 
-    logfile.write('{}'.format(hist_loss['loss'][-1]))
+    if not hist_loss == None:
+        logfile.write('{}'.format(hist_loss['loss'][-1]))
 
     logfile.write('\n')
     logfile.close()

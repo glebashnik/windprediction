@@ -57,18 +57,16 @@ class NN_dual:
     def build_model(self, input_dim, output_dim):
         input_layer = Input(shape=(input_dim,))
 
-        # x1 = self.dense_block(input_layer, 128, False, 0)
-        x1 = self.dense_block(input_layer, 64, False, 0)
-        x2 = self.dense_block(x1, 32, False, 0)
-        x3 = self.dense_block(x2, 16, False, 0)
-        x4 = self.dense_block(x3, 8, False, 0)
-        x5 = self.dense_block(x4, 2, False, 0)
+        x = self.dense_block(input_layer, 256, False, 0)
+        x = self.dense_block(x, 128, False, 0)
+        x = self.dense_block(x, 64, True, 0)
+        x = self.dense_block(x, 32, False, 0)
+        x = self.dense_block(x, 16, True, 0)
+        x = self.dense_block(x, 8, False, 0)
+        x = self.dense_block(x, 2, False, 0)
 
-        # single_prod = Dense(num_windmills)(x3)
+        total = Dense(1)(x)
 
-        total = Dense(1)(x4)
-
-        # , single_prod])
         self.model = Model(inputs=input_layer, outputs=total)
         self.model.summary()
         return self.model
@@ -121,7 +119,7 @@ class NN_dual:
 
         return self.model.predict(x)
 
-    def evaluate(self, x_test, y_test, single_targets):
+    def evaluate(self, x_test, y_test, single_targets=False):
         self.model.compile(loss='mae', optimizer='adam',
                            metrics=['mae'])
         self.model.load_weights(self.model_path)
