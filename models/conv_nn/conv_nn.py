@@ -53,18 +53,18 @@ class Conv_NN:
     def train_network(self, x_prod_train, x_rest_train, y_train, opt='adam'):
         self.model.compile(loss='mae', optimizer='adam', metrics=['mae'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=5000)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=50)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
-        self.model.fit([x_prod_train, x_rest_train], [y_train],
+        history = self.model.fit([x_prod_train, x_rest_train], [y_train],
                         batch_size=self.batch_size, validation_split=0.2, callbacks=[early_stopping, checkpoint],
                         epochs = self.epochs, verbose=2, shuffle=True)
 
-        return self.model
+        return history.history, self.model
 
     def evaluate(self, x_prod_test, x_rest_test, y_test):
-        self.model.compile(loss='mae', optimizer='adam',metrics=['mae','mse',self.rmse])
+        self.model.compile(loss='mae', optimizer='adam',metrics=['mae'])
         self.model.load_weights(self.model_path)
         
         evaluation = self.model.evaluate([x_prod_test, x_rest_test], y_test)
