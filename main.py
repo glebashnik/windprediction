@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import time
 import datetime
 
-from util.processing import process_dataset_lstm, process_dataset_nn
+from util.processing import process_dataset_lstm, process_dataset_nn, process_dataset_conv_nn
 from util.visualization import visualize_loss_history
 from util.logging import write_results
 from data.dataset_generator import *
@@ -18,6 +18,12 @@ from models.dense_nn_forest.NN_forest import *
 from models.ann_error_feedback.ann_feedback import NN_feedback
 from models.nn_dual_loss.nn_dual_loss import NN_dual
 from models.lstm_stateful.main import RNN
+<<<<<<< HEAD
+=======
+from models.lstm_stateful.main import RNN
+from models.conv_nn.conv_nn import Conv_NN
+
+>>>>>>> 032d1a7d318fcf49cf4cd6782bcb4c7651dcf3fc
 
 # from keras import optimizers
 from models.random_forest.random_forest import RandomForest
@@ -47,7 +53,7 @@ model_path = os.path.join('checkpoint_model.h5')
 tek_out_path = os.path.join('data', 'tek_out.csv')
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 
-dataset = generate_bessaker_large_dataset(tek_out_path)
+dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)
 dataset = dataset.dropna()
 
 
@@ -83,7 +89,7 @@ momentum = 0.9
 
 
 print('Beginning model training on the path: {}'.format(model_path))
-print('Data loaded with {} atributes\n'.format(len(dataset.columns)))
+print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
 
 # Dense
 # x_train, x_test, y_train, y_test = process_dataset_nn(
@@ -106,7 +112,7 @@ opt_name = [
     'adam'
 ]
 
-# Define networks, domensions: (models,networks,layers)
+# Define networks, dimensions: (models,networks,layers)
 best_network = [
     [(32, False), (16, False), (8, True), (2, False)],
     [(128, False), (64, True), (32, False), (8, False)],
@@ -143,23 +149,23 @@ def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', wri
     network = NN_dual(model_path=model_path, batch_size=32, epochs=epochs,
                       dropoutrate=dropoutrate)
 
-    if not single_targets:
-        model_architecture = network.build_model(
-            input_dim=num_features, output_dim=num_targets)
-        model_architecture.summary()
-    else:
-        model_architecture = network.build_model_single_targets(
-            input_dim=num_features, output_dim=num_targets)
+
+    model_architecture = network.build_model(
+        input_dim=num_features, output_dim=num_targets)
+    model_architecture.summary()
+
 
     hist_loss, model = network.train_network(
         x_train=x_train, y_train=y_train, opt=opt)
 
     evaluation, metric_names = network.evaluate(x_test, y_test, single_targets)
 
+
     if write_log:
         write_results(park, model_architecture, note, num_features,
                       hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
 
+    return evaluation
 
 def execute_network_advanced(dataset, note, layers, epochs, dropoutrate=0.3, opt='adam', write_log=False):
 
@@ -232,30 +238,95 @@ def execute_random_forest(dataset, notes):
 #     dataset, scope=3000, num_features=48, print_=True)
 # exit(0)
 
+<<<<<<< HEAD
 
 execute_network_lstm(
     dataset, 'Training lstm network on large dataset, stateful', lstm_layers, epochs, write_log=True)
-
-execute_network_advanced(
-    dataset, 'training huge network forest full dataset 38700', network_forest, epochs, write_log=True)
+=======
 
 
-execute_network_advanced(
-    dataset, 'training best network forest, only 38700', best_network, epochs, write_log=True)
+# execute_network_lstm(
+    # dataset, 'Training lstm network on large dataset, stateful', lstm_layers, epochs, write_log=True)
+>>>>>>> 032d1a7d318fcf49cf4cd6782bcb4c7651dcf3fc
+
+# execute_network_advanced(
+    # dataset, 'training huge network forest full dataset 38700', network_forest, epochs, write_log=True)
 
 
-execute_network_simple(
-    dataset, 'Training simpole network with 38700 samples', epochs, write_log=True, single_targets=False)
+def execute_conv_network(dataset, note, write_log=False):
+
+    # Dette ble kjempe stykt, bare å si fra om noen kan en god løsning på dette
+    x_prod_train, x_rest_train, x_prod_test, x_rest_test, y_train, y_test = process_dataset_conv_nn(dataset, production_col_name='Produksjon')
+
+    history_length = np.shape(x_prod_train)[1]
+    rest_input_dim = x_rest_train.shape[1]
+
+    network = Conv_NN(epochs=epochs, batch_size=batch_size, model_path=model_path,)
+
+    model_architecture = network.build_model(history_length, rest_input_dim)
+    model_architecture.summary()
+
+    model = network.train_network(x_prod_train, x_rest_train, y_train, opt=opt)
+
+    evaluation, metric_names = network.evaluate(
+        x_prod_test, x_rest_test, y_test)
+    print(evaluation)
+
+    # Creates model, trains the network and saves the evaluation in a txt file.
+    # Requires a specified network and training hyperparameters
+
+
+# ========== Comment in the model you want to run here ==========   
+# execute_network_simple(
+#     dataset, 'Training with 38700 samples', epochs, write_log=True, single_targets=False)
+
+# dataset = dataset[0:8000]
+
+# execute_network_simple(
+#     dataset, 'Training with 8000 samples', epochs, write_log=True, single_targets=False)
+
+# exit(0)
+# execute_network_advanced(
+#     dataset, 'training on network forest', best_network, epochs, write_log=True)
+
+# execute_network_advanced(
+    # dataset, 'training best network forest, only 38700', best_network, epochs, write_log=True)
+
+
+data_buckets = [100,200,500,1000,3000,5000,8000,12000,20000, dataset.shape[0]]
+evaluation_list = []
+for i,bucket in enumerate(data_buckets):
+    subdataset = dataset[0:bucket]
+
+
+    evaluation = execute_network_simple(
+        subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True, single_targets=False)
+
+    evaluation_list.append(evaluation[0])
+
+with h5py.File('training_data_buckets.hdf5', 'w') as f:
+    print('Saving all model evaluations in h5 file')
+    f.create_dataset('buckets', data=data_buckets)
+    f.create_dataset('evaluations', data=evaluation_list)
 
 exit(0)
-execute_network_advanced(
-    dataset, 'training on network forest', network_forest, epochs, write_log=True)
+
+<<<<<<< HEAD
+=======
+# execute_network_advanced(
+#     dataset, 'training on network forest', network_forest, epochs, write_log=True)
+
+# dataset = feature_importance(
+#     dataset, scope=3000, num_features=48, print_=False)
 
 
-execute_network_simple(
-    dataset, 'Training on feature importance adv dataset', epochs, write_log=True)
+# execute_network_simple(
+#     dataset, 'Training on feature importance adv dataset', epochs, write_log=True)
+>>>>>>> 032d1a7d318fcf49cf4cd6782bcb4c7651dcf3fc
 
-execute_network_advanced(
-    dataset, 'Training on feature importance adv dataset', layers[0], epochs, write_log=True)
-execute_network_advanced(
-    dataset, 'Training on feature importance adv dataset', layers[1], epochs, write_log=True)
+# execute_network_advanced(
+#     dataset, 'Training on feature importance adv dataset', layers[0], epochs, write_log=True)
+# execute_network_advanced(
+#     dataset, 'Training on feature importance adv dataset', layers[1], epochs, write_log=True)
+
+execute_conv_network(dataset, 'Conv network', write_log=True)

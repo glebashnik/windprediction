@@ -1,0 +1,10 @@
+
+
+Bessaker Vindpark
+training on advanced dataset with storm delta production delta
+Features: 75
+Optimizer: adam
+Dropoutrate: 0.3
+Trained 5000 epochs
+mean_absolute_error test evaluation
+3.457450230296065

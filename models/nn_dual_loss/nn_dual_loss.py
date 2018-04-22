@@ -113,6 +113,7 @@ class NN_dual:
             early_stopping, checkpoint], epochs=self.epochs, verbose=2, shuffle=True)
 
         return history.history, self.model
+        
 
     def predict(self, x):
         self.model.compile(loss='mae', optimizer='adam',

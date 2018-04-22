@@ -1,0 +1,9 @@
+
+Bessaker Vindpark
+training w prod delta, 128-64-32-16-8-2-1
+Features: 72
+Optimizer: adam
+Dropoutrate: 0
+Trained 5000 epochs
+mean_absolute_error test evaluation
+3.8816562289726444
