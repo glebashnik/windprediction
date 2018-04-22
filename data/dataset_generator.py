@@ -484,26 +484,37 @@ def Bessaker_dataset(data_path):
         exit(1)
 
     return pd.concat([
+
+        # Produksjon Bessaker
         df.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1),
+        # Nacelle
         df.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
 
+        # Skomaker stasj
+        df.filter(like='SKOM', axis=1),
+
         # Værnes
-        df['DNMI_69100...........T0015A3-0120'],
+        # df['DNMI_69100...........T0015A3-0120'],
+        # Alle værstasjoner med alle målinger
+        df.filter(like='DNMI', axis=1),
 
         # ØRLAND III (Koordinater: 63.705, 9.611)
-        df['DNMI_71550...........T0015A3-0120'],
+        # df['DNMI_71550...........T0015A3-0120'],
 
         # HALTEN FYR ( Kordinater: 64.173, 9.405 )
-        df['DNMI_71850...........T0015A3-0120'],
+        # df['DNMI_71850...........T0015A3-0120'],
 
         # BUHOLMRÅSA FYR (kordinater: 64.401, 10.455)
-        df['DNMI_71990...........T0015A3-0120'],
+        # df['DNMI_71990...........T0015A3-0120'],
 
         # NAMSOS LUFTHAVN (Koordinater: 64.471, 11.571)
-        df['DNMI_72580...........T0015A3-0120'],
+        # df['DNMI_72580...........T0015A3-0120'],
 
         # Arome values
         df.filter(like='arome_wind', axis=1),
+
+        # Arome airtemp
+        df.filter(like='arome_airtemp', axis=1),
 
         # Storm vind måling
         df.filter(like='STORM-Bess', axis=1).shift(-2),
