@@ -79,7 +79,7 @@ print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 testsplit = 0.7
 look_back = 6
 look_ahead = 1
-epochs = 2000
+epochs = 1
 batch_size = 64
 lr = 0.001
 decay = 1e-6
@@ -300,20 +300,21 @@ def execute_conv_network(dataset, note, write_log=False):
 # execute_network_advanced(
     # dataset, 'training best network forest, only 38700', best_network, epochs, write_log=True)
 
-visualize_training_buckets('training_data_buckets_results_1.hdf5')
-exit(0)
+# visualize_training_buckets('training_data_buckets.hdf5')
 data_buckets = [100, 200, 500, 1000, 3000,
                 5000, 8000, 12000, 20000, dataset.shape[0]]
 evaluation_list = []
 for i, bucket in enumerate(data_buckets):
     subdataset = dataset[0:bucket]
 
+    print(subdataset.shape[0])
+
     evaluation = execute_network_simple(
         subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True, single_targets=False)
 
     evaluation_list.append(evaluation[0])
 
-with h5py.File('training_data_buckets.hdf5', 'w') as f:
+with h5py.File('test.hdf5', 'w') as f:
     print('Saving all model evaluations in h5 file')
     f.create_dataset('buckets', data=data_buckets)
     f.create_dataset('evaluations', data=evaluation_list)
