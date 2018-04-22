@@ -85,6 +85,8 @@ lr = 0.001
 decay = 1e-6
 momentum = 0.9
 
+######################################
+
 
 print('Beginning model training on the path: {}'.format(model_path))
 print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
@@ -103,7 +105,7 @@ def visualize_training_buckets(file_path):
     buckets = history['buckets'].value
     evaluations = history['evaluations'].value
 
-    plt.plot(buckets, evaluations, 'bo')
+    plt.plot(buckets[1:], evaluations[1:], 'bo')
     plt.title('Network training loss for different dataset sizes')
     plt.ylabel('MAE')
     plt.xlabel('Dataset sizes')
@@ -300,9 +302,13 @@ def execute_conv_network(dataset, note, write_log=False):
 # execute_network_advanced(
     # dataset, 'training best network forest, only 38700', best_network, epochs, write_log=True)
 
-# visualize_training_buckets('training_data_buckets.hdf5')
-data_buckets = [100, 200, 500, 1000, 3000,
-                5000, 8000, 12000, 20000, dataset.shape[0]]
+# visualize_training_buckets('training_data_buckets_1st_2000e.hdf5')
+
+# evaluation = execute_network_simple(
+#     dataset, 'Training simple network, trying to recreate earlier results', epochs, write_log=True, single_targets=False)
+
+data_buckets = [200, 500, 1000, 2000,
+                4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
 evaluation_list = []
 for i, bucket in enumerate(data_buckets):
     subdataset = dataset[0:bucket]
@@ -314,7 +320,7 @@ for i, bucket in enumerate(data_buckets):
 
     evaluation_list.append(evaluation[0])
 
-with h5py.File('test.hdf5', 'w') as f:
+with h5py.File('large test buckets.hdf5', 'w') as f:
     print('Saving all model evaluations in h5 file')
     f.create_dataset('buckets', data=data_buckets)
     f.create_dataset('evaluations', data=evaluation_list)
