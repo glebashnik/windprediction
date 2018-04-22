@@ -483,9 +483,6 @@ def Bessaker_dataset(data_path):
         print('No data found on: ' + tek_path)
         exit(1)
 
-    print(df.columns)
-    exit(0)
-
     return pd.concat([
         df.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1),
         df.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
