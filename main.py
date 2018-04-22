@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 import datetime
+import h5py
 
 from util.processing import process_dataset_lstm, process_dataset_nn, process_dataset_conv_nn
 from util.visualization import visualize_loss_history
@@ -18,12 +19,9 @@ from models.dense_nn_forest.NN_forest import *
 from models.ann_error_feedback.ann_feedback import NN_feedback
 from models.nn_dual_loss.nn_dual_loss import NN_dual
 from models.lstm_stateful.main import RNN
-<<<<<<< HEAD
-=======
 from models.lstm_stateful.main import RNN
 from models.conv_nn.conv_nn import Conv_NN
 
->>>>>>> 032d1a7d318fcf49cf4cd6782bcb4c7651dcf3fc
 
 # from keras import optimizers
 from models.random_forest.random_forest import RandomForest
@@ -81,7 +79,7 @@ print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 testsplit = 0.7
 look_back = 6
 look_ahead = 1
-epochs = 1
+epochs = 2000
 batch_size = 64
 lr = 0.001
 decay = 1e-6
@@ -96,6 +94,23 @@ print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
 #     dataset,
 #     testsplit=testsplit
 # )
+
+
+def visualize_training_buckets(file_path):
+
+    history = h5py.File(file_path, 'r')
+
+    buckets = history['buckets'].value
+    evaluations = history['evaluations'].value
+
+    plt.plot(buckets, evaluations, 'bo')
+    plt.title('Network training loss for different dataset sizes')
+    plt.ylabel('MAE')
+    plt.xlabel('Dataset sizes')
+    # plt.legend(metrics, loc='upper right')
+    # if (start != None) and (end != None):
+    #     plt.xlim(start, end)
+    plt.show()
 
 
 opt = [
@@ -149,23 +164,21 @@ def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', wri
     network = NN_dual(model_path=model_path, batch_size=32, epochs=epochs,
                       dropoutrate=dropoutrate)
 
-
     model_architecture = network.build_model(
         input_dim=num_features, output_dim=num_targets)
     model_architecture.summary()
-
 
     hist_loss, model = network.train_network(
         x_train=x_train, y_train=y_train, opt=opt)
 
     evaluation, metric_names = network.evaluate(x_test, y_test, single_targets)
 
-
     if write_log:
         write_results(park, model_architecture, note, num_features,
                       hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
 
     return evaluation
+
 
 def execute_network_advanced(dataset, note, layers, epochs, dropoutrate=0.3, opt='adam', write_log=False):
 
@@ -238,16 +251,9 @@ def execute_random_forest(dataset, notes):
 #     dataset, scope=3000, num_features=48, print_=True)
 # exit(0)
 
-<<<<<<< HEAD
-
-execute_network_lstm(
-    dataset, 'Training lstm network on large dataset, stateful', lstm_layers, epochs, write_log=True)
-=======
-
 
 # execute_network_lstm(
     # dataset, 'Training lstm network on large dataset, stateful', lstm_layers, epochs, write_log=True)
->>>>>>> 032d1a7d318fcf49cf4cd6782bcb4c7651dcf3fc
 
 # execute_network_advanced(
     # dataset, 'training huge network forest full dataset 38700', network_forest, epochs, write_log=True)
@@ -256,12 +262,14 @@ execute_network_lstm(
 def execute_conv_network(dataset, note, write_log=False):
 
     # Dette ble kjempe stykt, bare å si fra om noen kan en god løsning på dette
-    x_prod_train, x_rest_train, x_prod_test, x_rest_test, y_train, y_test = process_dataset_conv_nn(dataset, production_col_name='Produksjon')
+    x_prod_train, x_rest_train, x_prod_test, x_rest_test, y_train, y_test = process_dataset_conv_nn(
+        dataset, production_col_name='Produksjon')
 
     history_length = np.shape(x_prod_train)[1]
     rest_input_dim = x_rest_train.shape[1]
 
-    network = Conv_NN(epochs=epochs, batch_size=batch_size, model_path=model_path,)
+    network = Conv_NN(epochs=epochs, batch_size=batch_size,
+                      model_path=model_path,)
 
     model_architecture = network.build_model(history_length, rest_input_dim)
     model_architecture.summary()
@@ -276,7 +284,7 @@ def execute_conv_network(dataset, note, write_log=False):
     # Requires a specified network and training hyperparameters
 
 
-# ========== Comment in the model you want to run here ==========   
+# ========== Comment in the model you want to run here ==========
 # execute_network_simple(
 #     dataset, 'Training with 38700 samples', epochs, write_log=True, single_targets=False)
 
@@ -292,12 +300,13 @@ def execute_conv_network(dataset, note, write_log=False):
 # execute_network_advanced(
     # dataset, 'training best network forest, only 38700', best_network, epochs, write_log=True)
 
-
-data_buckets = [100,200,500,1000,3000,5000,8000,12000,20000, dataset.shape[0]]
+visualize_training_buckets('training_data_buckets_results_1.hdf5')
+exit(0)
+data_buckets = [100, 200, 500, 1000, 3000,
+                5000, 8000, 12000, 20000, dataset.shape[0]]
 evaluation_list = []
-for i,bucket in enumerate(data_buckets):
+for i, bucket in enumerate(data_buckets):
     subdataset = dataset[0:bucket]
-
 
     evaluation = execute_network_simple(
         subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True, single_targets=False)
@@ -311,8 +320,6 @@ with h5py.File('training_data_buckets.hdf5', 'w') as f:
 
 exit(0)
 
-<<<<<<< HEAD
-=======
 # execute_network_advanced(
 #     dataset, 'training on network forest', network_forest, epochs, write_log=True)
 
@@ -322,7 +329,6 @@ exit(0)
 
 # execute_network_simple(
 #     dataset, 'Training on feature importance adv dataset', epochs, write_log=True)
->>>>>>> 032d1a7d318fcf49cf4cd6782bcb4c7651dcf3fc
 
 # execute_network_advanced(
 #     dataset, 'Training on feature importance adv dataset', layers[0], epochs, write_log=True)
