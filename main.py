@@ -33,15 +33,14 @@ arome_path = os.path.join(
     'data/raw', 'vindkraft 130717-160218 arome korr winddir.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
-# dataset = generate_bessaker_large_dataset_scratch(
-#     os.path.join('data', 'Bessaker large'))
+park = 'Bessaker large'
+latest_scream_dataset_path = os.path.join(
+    'data', park, 'dataset_20130818-20180420.csv')
+dataset = Bessaker_dataset(latest_scream_dataset_path)
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-park = 'Bessaker large'
-
 # datapath = os.path.join('data', park)
 
 tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
@@ -51,8 +50,8 @@ model_path = os.path.join('checkpoint_model.h5')
 tek_out_path = os.path.join('data', 'tek_out.csv')
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 
-dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)
-dataset = dataset.dropna()
+# dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)
+# dataset = dataset.dropna()
 
 
 # dataset = generate_bessaker_large_dataset(datapath)
@@ -79,8 +78,8 @@ print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 testsplit = 0.7
 look_back = 6
 look_ahead = 1
-epochs = 1
-batch_size = 64
+epochs = 2000
+batch_size = 128
 lr = 0.001
 decay = 1e-6
 momentum = 0.9
@@ -88,8 +87,8 @@ momentum = 0.9
 ######################################
 
 
-print('Beginning model training on the path: {}'.format(model_path))
-print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
+# print('Beginning model training on the path: {}'.format(model_path))
+# print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
 
 # Dense
 # x_train, x_test, y_train, y_test = process_dataset_nn(
@@ -155,13 +154,15 @@ dropouts = [0.2, 0.3, 0.4, 0.5]
 lstm_layers = [64, 32, 16, 8]
 
 
-def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', write_log=False, single_targets=False):
+def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', write_log=False):
 
     x_train, x_test, y_train, y_test = process_dataset_nn(
-        dataset, testsplit=testsplit, single_targets=single_targets)
+        dataset, testsplit=testsplit)
 
     num_features = x_train.shape[1]
     num_targets = y_train.shape[1]
+
+    print('Training with {} features'.format(num_features))
 
     network = NN_dual(model_path=model_path, batch_size=32, epochs=epochs,
                       dropoutrate=dropoutrate)
@@ -247,19 +248,6 @@ def execute_random_forest(dataset, notes):
 
     print('Test evaluation on random forest: {}'.format(evaluation))
 
-    # Creates model, trains the network and saves the evaluation in a txt file.
-    # Requires a specified network and training hyperparameters
-# dataset = feature_importance(
-#     dataset, scope=3000, num_features=48, print_=True)
-# exit(0)
-
-
-# execute_network_lstm(
-    # dataset, 'Training lstm network on large dataset, stateful', lstm_layers, epochs, write_log=True)
-
-# execute_network_advanced(
-    # dataset, 'training huge network forest full dataset 38700', network_forest, epochs, write_log=True)
-
 
 def execute_conv_network(dataset, note, write_log=False):
 
@@ -304,9 +292,9 @@ def execute_conv_network(dataset, note, write_log=False):
 
 # visualize_training_buckets('training_data_buckets_1st_2000e.hdf5')
 
-# evaluation = execute_network_simple(
-#     dataset, 'Training simple network, trying to recreate earlier results', epochs, write_log=True, single_targets=False)
-
+evaluation = execute_network_simple(
+    dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
+exit(0)
 data_buckets = [200, 500, 1000, 2000,
                 4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
 evaluation_list = []
@@ -316,7 +304,7 @@ for i, bucket in enumerate(data_buckets):
     print(subdataset.shape[0])
 
     evaluation = execute_network_simple(
-        subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True, single_targets=False)
+        subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True)
 
     evaluation_list.append(evaluation[0])
 
