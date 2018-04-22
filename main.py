@@ -157,7 +157,7 @@ lstm_layers = [64, 32, 16, 8]
 def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', write_log=False):
 
     x_train, x_test, y_train, y_test = process_dataset_nn(
-        dataset, testsplit=testsplit, single_targets=single_targets)
+        dataset, testsplit=testsplit)
 
     num_features = x_train.shape[1]
     num_targets = y_train.shape[1]
@@ -293,7 +293,7 @@ def execute_conv_network(dataset, note, write_log=False):
 # visualize_training_buckets('training_data_buckets_1st_2000e.hdf5')
 
 evaluation = execute_network_simple(
-    latest_d, 'Training simple network with new dataset and dropout', epochs, write_log=True)
+    dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
 exit(0)
 data_buckets = [200, 500, 1000, 2000,
                 4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
