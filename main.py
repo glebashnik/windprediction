@@ -33,6 +33,10 @@ arome_path = os.path.join(
     'data/raw', 'vindkraft 130717-160218 arome korr winddir.csv')
 modelpath = os.path.join('checkpoint_model.h5')
 
+latest_scream_dataset_path = os.path.join(
+    'data', 'dataset_20130818-20180420.csv')
+latest_d = Bessaker_dataset(latest_scream_dataset_path)
+
 # dataset = generate_bessaker_large_dataset_scratch(
 #     os.path.join('data', 'Bessaker large'))
 
@@ -162,6 +166,8 @@ def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', wri
 
     num_features = x_train.shape[1]
     num_targets = y_train.shape[1]
+
+    print('Training with {} features'.format(num_features))
 
     network = NN_dual(model_path=model_path, batch_size=32, epochs=epochs,
                       dropoutrate=dropoutrate)
@@ -304,9 +310,9 @@ def execute_conv_network(dataset, note, write_log=False):
 
 # visualize_training_buckets('training_data_buckets_1st_2000e.hdf5')
 
-# evaluation = execute_network_simple(
-#     dataset, 'Training simple network, trying to recreate earlier results', epochs, write_log=True, single_targets=False)
-
+evaluation = execute_network_simple(
+    dataset, 'Training simple network, ', epochs, write_log=True, single_targets=False)
+exit(0)
 data_buckets = [200, 500, 1000, 2000,
                 4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
 evaluation_list = []
