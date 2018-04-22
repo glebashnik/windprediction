@@ -36,7 +36,8 @@ modelpath = os.path.join('checkpoint_model.h5')
 park = 'Bessaker large'
 latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
-dataset = Bessaker_dataset(latest_scream_dataset_path)
+# dataset = Bessaker_dataset(latest_scream_dataset_path)
+dataset = Valsnes_dataset(latest_scream_dataset_path)
 
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
@@ -78,7 +79,7 @@ print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 testsplit = 0.7
 look_back = 6
 look_ahead = 1
-epochs = 2000
+epochs = 2500
 batch_size = 128
 lr = 0.001
 decay = 1e-6
@@ -174,7 +175,7 @@ def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', wri
     hist_loss, model = network.train_network(
         x_train=x_train, y_train=y_train, opt=opt)
 
-    evaluation, metric_names = network.evaluate(x_test, y_test, single_targets)
+    evaluation, metric_names = network.evaluate(x_test, y_test)
 
     if write_log:
         write_results(park, model_architecture, note, num_features,
