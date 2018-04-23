@@ -40,46 +40,21 @@ def process_dataset_nn(dataset, testsplit=0.8, pca=False):
     x_train, x_test, y_train, y_test = train_test_split(
         data_x, data_y, test_size=1-testsplit, random_state=1745)
 
+def process_dataset_conv_nn(dataset, target, testsplit=0.8):
+   
 
-def production_history_data_split(data, production_col_name='Produksjon'):
-    production_data = data.filter(
-        regex=production_col_name, axis=1).as_matrix()
-    rest_data = data.filter(
-        regex='^(?!{})'.format(production_col_name), axis=1)
-    print(len(list(rest_data)))
-    rest_data = concat([rest_data, data.filter(
-        regex='{}-0'.format(production_col_name)).dropna()], axis=1)
-    print(len(list(rest_data)))
-    return production_data, rest_data
+    x_train, x_test, y_train, y_test = train_test_split(
+        dataset, target, test_size=1-testsplit, random_state=1745)
 
-
-def process_dataset_conv_nn(dataset, production_col_name='Produksjon', testsplit=0.8):
-    data_x, data_y = feature_target_split(dataset)
-
-    production_data, rest_data = production_history_data_split(
-        data_x, production_col_name)
-
-    x_prod_train, x_prod_test, y_train, y_test = train_test_split(
-        production_data, data_y, test_size=1-testsplit, random_state=1745)
-
-    x_rest_train, x_rest_test, y_train, y_test = train_test_split(
-        rest_data, data_y, test_size=1-testsplit, random_state=1745)
-
-    # test = abs(x_train['Produksjon-0-Timer-Siden'] - y_train).dropna()
-    # print(sum(test)/test.size)
     scaler = MinMaxScaler(copy=True, feature_range=(0, 1))
-    scaler.fit(x_prod_train)
-    x_prod_train = scaler.transform(x_prod_train)
-    x_prod_test = scaler.transform(x_prod_test)
+    scaler.fit(np.squeeze(x_train[:,0,:]))
+    for i in range(0,np.shape(x_train)[1]):
+        assert False==np.any(np.isnan(x_train[:,i,:])), i
+        assert False==np.any(np.isnan(x_test[:,i,:])), i
+        x_train[:,i,:] = scaler.transform(x_train[:,i,:])
+        x_test[:,i,:] = scaler.transform(x_test[:,i,:])
 
-    scaler.fit(x_rest_train)
-    x_rest_train = scaler.transform(x_rest_train)
-    x_rest_test = scaler.transform(x_rest_test)
-
-    x_prod_train = np.expand_dims(x_prod_train, axis=2)
-    x_prod_test = np.expand_dims(x_prod_test, axis=2)
-
-    return x_prod_train, x_rest_train, x_prod_test, x_rest_test, y_train, y_test
+    return x_train, x_test, y_train, y_test
 
 
 def process_dataset_nn(dataset, testsplit=0.8, pca=False, single_targets=False):

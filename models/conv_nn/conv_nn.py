@@ -21,23 +21,19 @@ class Conv_NN:
         self.epochs = epochs
         self.model_path = model_path
 
-    def build_model(self, history_length, rest_input_dim, l2_reg=0):
+    def build_model(self, history_length, num_features, l2_reg=0):
         
-        production_input = Input(shape=(history_length, 1), name='production_input')
+        history_input = Input(shape=(history_length, num_features), name='history_input')
 
-        prod_conv = Conv1D(filters=32, kernel_size=2, activation='relu')(production_input)
+        prod_conv = Conv1D(filters=128, kernel_size=2, activation='relu')(history_input)
         # prod_conv = BatchNormalization()(prod_conv)
         prod_pool = AveragePooling1D(pool_size=2)(prod_conv)
-        prod_conv = Conv1D(filters=16, kernel_size=1, activation='relu')(prod_pool)
+        prod_conv = Conv1D(filters=64, kernel_size=1, activation='relu')(prod_pool)
         # prod_conv = BatchNormalization()(prod_conv)
-        prod_pool = AveragePooling1D(pool_size=2)(prod_conv)
+        prod_pool = AveragePooling1D(pool_size=1)(prod_conv)
 
         flat = Flatten()(prod_pool)
-
-        rest_input = Input(shape=(rest_input_dim,), name='rest_input')
-
-        total_input = concatenate([flat, rest_input])
-        x = Dense(64, activation='relu')(total_input)
+        x = Dense(64, activation='relu')(flat)
         # x = BatchNormalization()(x)
         x = Dense(32, activation='relu')(x)
         # x = BatchNormalization()(x)
@@ -46,28 +42,28 @@ class Conv_NN:
         x = Dense(8, activation='relu')(x)
         output = Dense(1)(x)
 
-        self.model = Model(inputs=[production_input, rest_input], outputs=[output])
+        self.model = Model(inputs=[history_input], outputs=[output])
         return self.model
 
 
-    def train_network(self, x_prod_train, x_rest_train, y_train, opt='adam'):
+    def train_network(self, x_train, y_train, opt='adam'):
         self.model.compile(loss='mae', optimizer='adam', metrics=['mae'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=50)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=200)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
-        history = self.model.fit([x_prod_train, x_rest_train], [y_train],
+        history = self.model.fit([x_train], [y_train],
                         batch_size=self.batch_size, validation_split=0.2, callbacks=[early_stopping, checkpoint],
                         epochs = self.epochs, verbose=2, shuffle=True)
 
         return history.history, self.model
 
-    def evaluate(self, x_prod_test, x_rest_test, y_test):
+    def evaluate(self, x_test, y_test):
         self.model.compile(loss='mae', optimizer='adam',metrics=['mae'])
         self.model.load_weights(self.model_path)
         
-        evaluation = self.model.evaluate([x_prod_test, x_rest_test], y_test)
+        evaluation = self.model.evaluate([x_test], y_test)
         return evaluation, self.model.metrics_names
 
     #RMSE loss function (missing in keras library)

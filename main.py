@@ -24,49 +24,21 @@ from models.lstm_stateful.main import RNN
 from models.lstm_stateful.main import RNN
 from models.conv_nn.conv_nn import Conv_NN
 
+import xgboost as xgb
 
 # from keras import optimizers
 from models.random_forest.random_forest import RandomForest
 
 import h5py
 
-tek_path = os.path.join('data/raw', 'vindkraft 130717-160218 TEK met.csv')
-arome_path = os.path.join(
-    'data/raw', 'vindkraft 130717-160218 arome korr winddir.csv')
-modelpath = os.path.join('checkpoint_model.h5')
+model_path = os.path.join('checkpoint_model.h5')
 
 park = 'Bessaker large'
 latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
-# dataset = Bessaker_dataset(latest_scream_dataset_path)
-dataset = Valsnes_dataset(latest_scream_dataset_path)
 
-
-# datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
-# datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
-# datapath = os.path.join('data', park)
-
-tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
-arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
-model_path = os.path.join('checkpoint_model.h5')
-
-tek_out_path = os.path.join('data', 'tek_out.csv')
-# dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
-
-# dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)
-# dataset = dataset.dropna()
-
-
-# dataset = generate_bessaker_large_dataset(datapath)
-
-# # Extracting indices of most important features
-# dataset = dataset.drop(['BESS-Bessakerfj.-GS-T4015A3 -0104'], axis=1)
-# dataset = feature_importance(
-#     dataset, scope=3000, num_features=40, print_=True)
-# exit(0)
-
-# visualize_loss_history('M03-D21_h20-m07-s13')
-# exit(0)
+dataset = Bessaker_dataset(latest_scream_dataset_path)
+dataset, target = create_dataset_history(dataset, history_length=12)
 
 # Selection of gpu
 parser = argparse.ArgumentParser(
@@ -265,25 +237,21 @@ def execute_xgb(dataset, notes):
     pred = model.predict(test_data)
     print("MAE is ", np.average(np.abs(pred-y_test)))
 
-def execute_conv_network(dataset, note, write_log=False):
+def execute_conv_network(dataset, target, note, write_log=False):
 
-    # Dette ble kjempe stykt, bare å si fra om noen kan en god løsning på dette
-    x_prod_train, x_rest_train, x_prod_test, x_rest_test, y_train, y_test = process_dataset_conv_nn(dataset, production_col_name='Produksjon')
+    x_train, x_test, y_train, y_test = process_dataset_conv_nn(dataset, target)
     
-    history_length = np.shape(x_prod_train)[1]
-    rest_input_dim = x_rest_train.shape[1]
-    num_features = rest_input_dim+history_length
+    history_length = np.shape(x_train)[1]
+    num_features = np.shape(x_train)[2]
 
+    network = Conv_NN(epochs=epochs, batch_size=batch_size, model_path=model_path)
 
-    network = Conv_NN(epochs=epochs, batch_size=batch_size, model_path=model_path,)
-
-    model_architecture = network.build_model(history_length, rest_input_dim)
+    model_architecture = network.build_model(history_length, num_features)
     model_architecture.summary()
 
-    hist_loss, model = network.train_network(x_prod_train, x_rest_train, y_train, opt=opt)
+    hist_loss, model = network.train_network(x_train, y_train, opt=opt)
 
-    evaluation, metric_names = network.evaluate(
-        x_prod_test, x_rest_test, y_test)
+    evaluation, metric_names = network.evaluate(x_test, y_test)
     
     if write_log:
         dropoutrate = 0 
@@ -312,28 +280,28 @@ def execute_conv_network(dataset, note, write_log=False):
 
 # visualize_training_buckets('training_data_buckets_1st_2000e.hdf5')
 
-evaluation = execute_network_simple(
-    dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
-exit(0)
-data_buckets = [200, 500, 1000, 2000,
-                4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
-evaluation_list = []
-for i, bucket in enumerate(data_buckets):
-    subdataset = dataset[0:bucket]
+# evaluation = execute_network_simple(
+#     dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
+# exit(0)
+# data_buckets = [200, 500, 1000, 2000,
+#                 4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
+# evaluation_list = []
+# for i, bucket in enumerate(data_buckets):
+#     subdataset = dataset[0:bucket]
 
-    print(subdataset.shape[0])
+#     print(subdataset.shape[0])
 
-    evaluation = execute_network_simple(
-        subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True)
+#     evaluation = execute_network_simple(
+#         subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True)
 
-    evaluation_list.append(evaluation[0])
+#     evaluation_list.append(evaluation[0])
 
-with h5py.File('large test buckets.hdf5', 'w') as f:
-    print('Saving all model evaluations in h5 file')
-    f.create_dataset('buckets', data=data_buckets)
-    f.create_dataset('evaluations', data=evaluation_list)
+# with h5py.File('large test buckets.hdf5', 'w') as f:
+#     print('Saving all model evaluations in h5 file')
+#     f.create_dataset('buckets', data=data_buckets)
+#     f.create_dataset('evaluations', data=evaluation_list)
 
-exit(0)
+# exit(0)
 
 # execute_network_advanced(
 #     dataset, 'training on network forest', network_forest, epochs, write_log=True)
@@ -350,6 +318,6 @@ exit(0)
 # execute_network_advanced(
 #     dataset, 'Training on feature importance adv dataset', layers[1], epochs, write_log=True)
 
-execute_conv_network(dataset, 'Conv network', write_log=True)
+execute_conv_network(dataset, target, 'Conv network', write_log=True)
 
 # execute_xgb(dataset, 'XG BOOST')
