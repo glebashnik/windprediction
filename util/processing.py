@@ -53,7 +53,7 @@ def production_history_data_split(data, production_col_name='Produksjon'):
     return production_data, rest_data
 
 
-def process_dataset_conv_nn(dataset, production_col_name='Produksjon', testsplit=0.8):
+def process_dataset_conv_nn(dataset, production_col_name='Produksjon', testsplit=0.96):
     data_x, data_y = feature_target_split(dataset)
 
     production_data, rest_data = production_history_data_split(

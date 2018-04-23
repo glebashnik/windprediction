@@ -24,6 +24,7 @@ from models.lstm_stateful.main import RNN
 from models.lstm_stateful.main import RNN
 from models.conv_nn.conv_nn import Conv_NN
 
+from keras.utils import plot_model
 
 # from keras import optimizers
 from models.random_forest.random_forest import RandomForest
@@ -40,18 +41,16 @@ latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
 # dataset = Bessaker_dataset(latest_scream_dataset_path)
 dataset = Bessaker_dataset(latest_scream_dataset_path, 12)
-test_dataset = dataset.iloc[-2000:]
-dataset = dataset.iloc[0:-2000]
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
 # datapath = os.path.join('data', park)
 
-tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
-arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
+# tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
+# arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
 model_path = os.path.join('checkpoint_model.h5')
 
-tek_out_path = os.path.join('data', 'tek_out.csv')
+# tek_out_path = os.path.join('data', 'tek_out.csv')
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 
 # dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)

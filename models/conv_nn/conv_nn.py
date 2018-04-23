@@ -27,10 +27,10 @@ class Conv_NN:
 
         prod_conv = Conv1D(filters=32, kernel_size=2, activation='relu')(production_input)
         # prod_conv = BatchNormalization()(prod_conv)
-        prod_pool = AveragePooling1D(pool_size=2)(prod_conv)
+        prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
         prod_conv = Conv1D(filters=16, kernel_size=1, activation='relu')(prod_pool)
         # prod_conv = BatchNormalization()(prod_conv)
-        prod_pool = AveragePooling1D(pool_size=2)(prod_conv)
+        prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
         flat = Flatten()(prod_pool)
         flat = Dropout(0.2)(flat)
 
@@ -39,12 +39,13 @@ class Conv_NN:
 
         total_input = concatenate([flat, rest_input])
         x = Dense(64, activation='relu')(total_input)
-        x = Dropout(0.5)(x)
-        x = Dense(32, activation='relu')(x)
         x = Dropout(0.3)(x)
+        x = Dense(32, activation='relu')(x)
+        x = Dropout(0.1)(x)
         x = Dense(16, activation='relu')(x)
-        x = Dropout(0.2)(x)
+        x = Dropout(0.005)(x)
         x = Dense(8, activation='relu')(x)
+        x = Dropout(0.001)(x)
         output = Dense(1)(x)
 
         self.model = Model(inputs=[production_input, rest_input], outputs=[output])
@@ -77,3 +78,4 @@ class Conv_NN:
 
     def rmse(self, y_true, y_pred):
         return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
+

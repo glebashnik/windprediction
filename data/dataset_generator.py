@@ -529,9 +529,7 @@ def Bessaker_dataset(data_path, history_length):
 
         # Sum produksjon
         df_production_history,
-        (df['/TS-Straum066_BessVind_Inn'].astype(
-            'd').shift(-2) - df['/TS-Straum066_BessVind_Inn'].astype(
-            'd')).rename('Target', inplace=True)
+        df['TargetBessaker'].astype('d')- df['TargetBessaker'].astype('d').shift(2)
     ], axis=1).iloc[:-2, :]
 
 
@@ -585,5 +583,5 @@ def Valsnes_dataset(data_path):
 
         # Sum produksjon
         df['TS-Straum066_BessVind_Inn'],
-        df['Target'].astype('d')
+        df['TargetValsnes'].astype('d')-df['TargetValsnes'].astype('d').shift(2)
     ], axis=1).iloc[:-2, :]

@@ -1,0 +1,12 @@
+
+
+Bessaker large
+Conv network
+Features: 136
+Optimizer: adam
+Dropoutrate: 0
+Trained 1000 epochs
+mean_absolute_error test evaluation
+[5.5868239502661785, 5.5868239502661785]
+mean_absolute_error training loss
+4.370975234375672
