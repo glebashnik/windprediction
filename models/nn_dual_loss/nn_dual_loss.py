@@ -59,7 +59,7 @@ class NN_dual:
 
         # x = self.dense_block(input_layer, 256, False, 0)
         # x = self.dense_block(input_layer, 128, False, 0)
-        x = self.dense_block(x, 64, False, 0)
+        x = self.dense_block(input_layer, 64, False, 0)
         x = self.dense_block(x, 32, False, 0)
         x = self.dense_block(x, 16, False, 0)
         x = self.dense_block(x, 8, False, 0)

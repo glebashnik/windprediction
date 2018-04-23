@@ -155,7 +155,7 @@ dropouts = [0.2, 0.3, 0.4, 0.5]
 lstm_layers = [64, 32, 16, 8]
 
 
-def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', write_log=False):
+def execute_network_simple(dataset, note, epochs, dropoutrate=0.25, opt='adam', write_log=False):
 
     # x_train, x_test, y_train, y_test = process_dataset_nn(
     #     dataset, testsplit=testsplit)
@@ -299,10 +299,8 @@ def execute_conv_network(dataset, note, write_log=False):
 # visualize_training_buckets('large test buckets.hdf5')
 
 
-# evaluation = execute_network_simple(
-    # dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
 data_buckets = [2000,
-                4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
+                4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset_vals.shape[0]]
 evaluation_list = []
 for i, bucket in enumerate(data_buckets):
     subdataset = dataset_vals[0:bucket]
@@ -319,6 +317,14 @@ with h5py.File('slim network, last attempt.hdf5', 'w') as f:
     f.create_dataset('buckets', data=data_buckets)
     f.create_dataset('evaluations', data=evaluation_list)
 
+evaluation = execute_network_simple(
+    dataset_bess, 'Simple - bess (month)', epochs, write_log=True)
+# execute_network_advanced(
+#     dataset_bess, 'Advanced - bess (month)', best_network, epochs, write_log=True)
+evaluation = execute_network_simple(
+    dataset_vals, 'Simple - vals (month)', epochs, write_log=True)
+# execute_network_advanced(
+#     dataset_vals, 'Advanced - vals (month)', best_network, epochs, write_log=True)
 exit(0)
 
 # execute_network_advanced(
