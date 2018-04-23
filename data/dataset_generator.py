@@ -521,7 +521,7 @@ def Bessaker_dataset(data_path):
 
         # Sum produksjon
         df['TS-Straum066_BessVind_Inn'],
-        df['Target'].astype('d')
+        df['TargetBessaker'].astype('d')
     ], axis=1).iloc[:-2, :]
 
 
@@ -553,7 +553,7 @@ def Valsnes_dataset(data_path):
 
         # ØRLAND III (Koordinater: 63.705, 9.611)
         # df['DNMI_71550...........T0015A3-0120'],
-        df.filter(like='DNMI_71550',axis=1),
+        df.filter(like='DNMI_71550', axis=1),
 
         # HALTEN FYR ( Kordinater: 64.173, 9.405 )
         # df['DNMI_71850...........T0015A3-0120'],
@@ -575,5 +575,5 @@ def Valsnes_dataset(data_path):
 
         # Sum produksjon
         df['TS-Straum066_BessVind_Inn'],
-        df['Target'].astype('d')
+        df['TargetValsnes'].astype('d')
     ], axis=1).iloc[:-2, :]

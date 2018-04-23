@@ -41,6 +41,18 @@ def process_dataset_nn(dataset, testsplit=0.8, pca=False):
         data_x, data_y, test_size=1-testsplit, random_state=1745)
 
 
+def process_dataset_nn_last_month(dataset):
+    data_x, data_y = feature_target_split(dataset)
+
+    x_train = data_x[:31117]
+    x_test = data_x[31117:]
+
+    y_train = data_y[:31117]
+    y_test = data_y[31117:]
+
+    return x_train, x_test, y_train, y_test
+
+
 def production_history_data_split(data, production_col_name='Produksjon'):
     production_data = data.filter(
         regex=production_col_name, axis=1).as_matrix()
