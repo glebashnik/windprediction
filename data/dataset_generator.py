@@ -70,7 +70,7 @@ def Bessaker_dataset_sparse(data_path):
         df.filter(like='SKOM', axis=1),
 
         # Værnes
-        # df['DNMI_69100...........T0015A3-0120'],
+        df['DNMI_69100...........T0015A3-0120'],
         # Alle værstasjoner med alle målinger
         # df.filter(like='DNMI', axis=1),
 

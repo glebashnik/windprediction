@@ -38,7 +38,7 @@ latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
 
 dataset = Bessaker_dataset_sparse(latest_scream_dataset_path)
-dataset, target = create_dataset_history(dataset, history_length=12)
+dataset, target = create_dataset_history(dataset, history_length=24)
 
 # Selection of gpu
 parser = argparse.ArgumentParser(

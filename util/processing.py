@@ -44,7 +44,7 @@ def process_dataset_conv_nn(dataset, target, testsplit=0.8):
    
 
     x_train, x_test, y_train, y_test = train_test_split(
-        dataset, target, test_size=1-testsplit, random_state=1745)
+        dataset, target, test_size=1-testsplit, shuffle=False) #random_state=1745)
 
     scaler = MinMaxScaler(copy=True, feature_range=(0, 1))
     scaler.fit(np.squeeze(x_train[:,0,:]))
