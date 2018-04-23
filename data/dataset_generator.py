@@ -51,6 +51,52 @@ def Bessaker_dataset(data_path):
         df['TargetBessaker'].astype('d')
     ], axis=1).iloc[:-2, :]
 
+def Bessaker_dataset_sparse(data_path):
+
+    try:
+        df = pd.read_csv(data_path, sep=';', header=0,
+                         decimal=',', low_memory=False)
+    except:
+        print('No data found on: ' + tek_path)
+        exit(1)
+    return pd.concat([
+
+        # Produksjon Bessaker
+        df.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1).iloc[:,0],
+        # Nacelle
+        df.filter(regex='BESS-Bessakerfj.*-0120', axis=1).iloc[:,0],
+
+        # Skomaker stasj
+        df.filter(like='SKOM', axis=1),
+
+        # Værnes
+        # df['DNMI_69100...........T0015A3-0120'],
+        # Alle værstasjoner med alle målinger
+        # df.filter(like='DNMI', axis=1),
+
+        # ØRLAND III (Koordinater: 63.705, 9.611)
+        # df['DNMI_71550...........T0015A3-0120'],
+
+        # HALTEN FYR ( Kordinater: 64.173, 9.405 )
+        # df['DNMI_71850...........T0015A3-0120'],
+
+        # BUHOLMRÅSA FYR (kordinater: 64.401, 10.455)
+        # df['DNMI_71990...........T0015A3-0120'],
+
+        # NAMSOS LUFTHAVN (Koordinater: 64.471, 11.571)
+        # df['DNMI_72580...........T0015A3-0120'],
+
+        # Arome values
+        df.filter(like='arome_wind', axis=1).iloc[:,0:2],
+
+        # Storm vind måling
+        df.filter(like='STORM-Bess', axis=1).shift(-2),
+
+        # Sum produksjon
+        df['TS-Straum066_BessVind_Inn'],
+        df['TargetBessaker'].astype('d')
+    ], axis=1).iloc[:-2, :]
+
 
 def Valsnes_dataset(data_path):
     try:
@@ -70,7 +116,7 @@ def Valsnes_dataset(data_path):
         # Nacelle
         df.filter(regex='BESS-Bessakerfj.*-0120', axis=1),
 
-        # Skomaker stasj
+        # Skomaker stasjon
         df.filter(like='SKOM', axis=1),
 
         # Værnes
