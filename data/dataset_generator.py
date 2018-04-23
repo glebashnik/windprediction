@@ -475,13 +475,21 @@ def generate_bessaker_large_dataset(tek_path, history_length=1):
     ], axis=1).iloc[:-2, :]
 
 
-def Bessaker_dataset(data_path):
+def Bessaker_dataset(data_path, history_length):
     try:
         df = pd.read_csv(data_path, sep=';', header=0,
                          decimal=',', low_memory=False)
     except:
         print('No data found on: ' + tek_path)
         exit(1)
+
+    # Creates 'history_length' columns of production history
+    df_production_history = df['/TS-Straum066_BessVind_Inn'].rename(
+        'Produksjon-{}-Timer-Siden'.format(0), inplace=True)
+    for i in range(1, history_length):
+        df_production_history = pd.concat([df_production_history, df['/TS-Straum066_BessVind_Inn'].astype(
+            'd').shift(i).rename('Produksjon-{}-Timer-Siden'.format(i), inplace=True)], axis=1)
+
 
     return pd.concat([
 
@@ -520,8 +528,10 @@ def Bessaker_dataset(data_path):
         df.filter(like='STORM-Bess', axis=1).shift(-2),
 
         # Sum produksjon
-        df['TS-Straum066_BessVind_Inn'],
-        df['Target'].astype('d')
+        df_production_history,
+        (df['/TS-Straum066_BessVind_Inn'].astype(
+            'd').shift(-2) - df['/TS-Straum066_BessVind_Inn'].astype(
+            'd')).rename('Target', inplace=True)
     ], axis=1).iloc[:-2, :]
 
 

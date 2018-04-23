@@ -31,18 +31,19 @@ class Conv_NN:
         prod_conv = Conv1D(filters=16, kernel_size=1, activation='relu')(prod_pool)
         # prod_conv = BatchNormalization()(prod_conv)
         prod_pool = AveragePooling1D(pool_size=2)(prod_conv)
-
         flat = Flatten()(prod_pool)
+        flat = Dropout(0.2)(flat)
+
 
         rest_input = Input(shape=(rest_input_dim,), name='rest_input')
 
         total_input = concatenate([flat, rest_input])
         x = Dense(64, activation='relu')(total_input)
-        # x = BatchNormalization()(x)
+        x = Dropout(0.5)(x)
         x = Dense(32, activation='relu')(x)
-        # x = BatchNormalization()(x)
+        x = Dropout(0.3)(x)
         x = Dense(16, activation='relu')(x)
-        # x = BatchNormalization()(x)
+        x = Dropout(0.2)(x)
         x = Dense(8, activation='relu')(x)
         output = Dense(1)(x)
 

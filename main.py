@@ -39,8 +39,9 @@ park = 'Bessaker large'
 latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
 # dataset = Bessaker_dataset(latest_scream_dataset_path)
-dataset = Valsnes_dataset(latest_scream_dataset_path)
-
+dataset = Bessaker_dataset(latest_scream_dataset_path, 12)
+test_dataset = dataset.iloc[-2000:]
+dataset = dataset.iloc[0:-2000]
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
@@ -78,7 +79,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 
 # Hyperparameters for training network
-testsplit = 0.7
+testsplit = 0.8
 look_back = 6
 look_ahead = 1
 epochs = 1000
@@ -312,28 +313,28 @@ def execute_conv_network(dataset, note, write_log=False):
 
 # visualize_training_buckets('training_data_buckets_1st_2000e.hdf5')
 
-evaluation = execute_network_simple(
-    dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
-exit(0)
-data_buckets = [200, 500, 1000, 2000,
-                4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
-evaluation_list = []
-for i, bucket in enumerate(data_buckets):
-    subdataset = dataset[0:bucket]
+# evaluation = execute_network_simple(
+#     dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
+# exit(0)
+# data_buckets = [200, 500, 1000, 2000,
+#                 4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
+# evaluation_list = []
+# for i, bucket in enumerate(data_buckets):
+#     subdataset = dataset[0:bucket]
 
-    print(subdataset.shape[0])
+#     print(subdataset.shape[0])
 
-    evaluation = execute_network_simple(
-        subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True)
+#     evaluation = execute_network_simple(
+#         subdataset, 'Training simple network with {} samples'.format(subdataset.shape[0]), epochs, write_log=True)
 
-    evaluation_list.append(evaluation[0])
+#     evaluation_list.append(evaluation[0])
 
-with h5py.File('large test buckets.hdf5', 'w') as f:
-    print('Saving all model evaluations in h5 file')
-    f.create_dataset('buckets', data=data_buckets)
-    f.create_dataset('evaluations', data=evaluation_list)
+# with h5py.File('large test buckets.hdf5', 'w') as f:
+#     print('Saving all model evaluations in h5 file')
+#     f.create_dataset('buckets', data=data_buckets)
+#     f.create_dataset('evaluations', data=evaluation_list)
 
-exit(0)
+# exit(0)
 
 # execute_network_advanced(
 #     dataset, 'training on network forest', network_forest, epochs, write_log=True)

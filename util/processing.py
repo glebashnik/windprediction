@@ -60,10 +60,10 @@ def process_dataset_conv_nn(dataset, production_col_name='Produksjon', testsplit
         data_x, production_col_name)
 
     x_prod_train, x_prod_test, y_train, y_test = train_test_split(
-        production_data, data_y, test_size=1-testsplit, random_state=1745)
+        production_data, data_y, test_size=1-testsplit, shuffle=False)
 
     x_rest_train, x_rest_test, y_train, y_test = train_test_split(
-        rest_data, data_y, test_size=1-testsplit, random_state=1745)
+        rest_data, data_y, test_size=1-testsplit, shuffle=False)
 
     # test = abs(x_train['Produksjon-0-Timer-Siden'] - y_train).dropna()
     # print(sum(test)/test.size)
