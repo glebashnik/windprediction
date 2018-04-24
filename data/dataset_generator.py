@@ -520,7 +520,7 @@ def Bessaker_dataset(data_path):
         df.filter(like='STORM-Bess', axis=1).shift(-2),
 
         # Sum produksjon
-        df['BESS-Bess-Stra66-T4015A3 -0104'],
+        df['BESS-Straum066KV-ut-T4045A3A-0106'],
         df['TargetBessaker'].astype('d')
     ], axis=1).iloc[:-2, :]
 
