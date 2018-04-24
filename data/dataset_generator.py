@@ -520,7 +520,7 @@ def Bessaker_dataset(data_path):
         df.filter(like='STORM-Bess', axis=1).shift(-2),
 
         # Sum produksjon
-        df['TS-Straum066_BessVind_Inn'],
+        df['BESS-Bess-Stra66-T4015A3 -0104'],
         df['TargetBessaker'].astype('d')
     ], axis=1).iloc[:-2, :]
 
@@ -574,6 +574,6 @@ def Valsnes_dataset(data_path):
         df.filter(like='STORM-Vals', axis=1).shift(-2),
 
         # Sum produksjon
-        df['TS-Straum066_BessVind_Inn'],
+        df["## =-%'VALS-Valsneset..-GS-T4015A3 -0104'*0.96"],
         df['TargetValsnes'].astype('d')
     ], axis=1).iloc[:-2, :]
