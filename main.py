@@ -24,7 +24,11 @@ from models.lstm_stateful.main import RNN
 from models.lstm_stateful.main import RNN
 from models.conv_nn.conv_nn import Conv_NN
 
+from keras.utils.vis_utils import plot_model
+
 import xgboost as xgb
+
+import matplotlib.pyplot as plt
 
 # from keras import optimizers
 from models.random_forest.random_forest import RandomForest
@@ -38,7 +42,7 @@ latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
 
 dataset = Bessaker_dataset_sparse(latest_scream_dataset_path)
-dataset, target = create_dataset_history(dataset, history_length=24)
+dataset, target = create_dataset_history(dataset, history_length=12)
 
 # Selection of gpu
 parser = argparse.ArgumentParser(
@@ -50,7 +54,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 print('Training on GPU {}'.format(os.environ['CUDA_VISIBLE_DEVICES']))
 
 # Hyperparameters for training network
-testsplit = 0.7
+testsplit = 0.96
 look_back = 6
 look_ahead = 1
 epochs = 1000
@@ -239,7 +243,7 @@ def execute_xgb(dataset, notes):
 
 def execute_conv_network(dataset, target, note, write_log=False):
 
-    x_train, x_test, y_train, y_test = process_dataset_conv_nn(dataset, target)
+    x_train, x_test, y_train, y_test = process_dataset_conv_nn(dataset, target, testsplit=testsplit)
     
     history_length = np.shape(x_train)[1]
     num_features = np.shape(x_train)[2]
@@ -248,11 +252,10 @@ def execute_conv_network(dataset, target, note, write_log=False):
 
     model_architecture = network.build_model(history_length, num_features)
     model_architecture.summary()
-
     hist_loss, model = network.train_network(x_train, y_train, opt=opt)
 
     evaluation, metric_names = network.evaluate(x_test, y_test)
-    
+
     if write_log:
         dropoutrate = 0 
         write_results(park, model_architecture, note, num_features,

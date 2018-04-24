@@ -25,29 +25,29 @@ class Conv_NN:
         
         history_input = Input(shape=(history_length, num_features), name='history_input')
 
-        prod_conv = Conv1D(filters=16, kernel_size=2, padding='same')(history_input)
+        prod_conv = Conv1D(filters=8, kernel_size=2, padding='same')(history_input)
         prod_conv = LeakyReLU(alpha=0.2)(prod_conv)
 
         prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
-        prod_conv = Conv1D(filters=32, kernel_size=2, padding='same')(prod_pool)
+        prod_conv = Conv1D(filters=16, kernel_size=2, padding='same')(prod_pool)
         prod_conv = LeakyReLU(alpha=0.2)(prod_conv)
 
-        prod_pool = MaxPooling1D(pool_size=1)(prod_conv)
+        prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
         flat = Flatten()(prod_pool)
         flat = Dropout(0.2)(flat)
         single_input = Input(shape=(num_features,))
         total_input = concatenate([flat, single_input]) 
-        x = Dense(64)(flat)
+        x = Dense(64)(total_input)
         x = LeakyReLU(alpha=0.2)(x)
         x = Dropout(0.5)(x)
-        x = Dense(32)(x)
-        x = LeakyReLU(alpha=0.2)(x)
-        x = Dropout(0.4)(x)
+        # x = Dense(32)(x)
+        # x = LeakyReLU(alpha=0.2)(x)
+        # x = Dropout(0.4)(x)
         x = Dense(16)(x)
         x = LeakyReLU(alpha=0.2)(x)
         x = Dropout(0.2)(x)
-        x = Dense(8)(x)
-        x = LeakyReLU(alpha=0.2)(x)
+        # x = Dense(8)(x)
+        # x = LeakyReLU(alpha=0.2)(x)
         output = Dense(1)(x)
 
         self.model = Model(inputs=[history_input, single_input], outputs=[output])
@@ -57,13 +57,13 @@ class Conv_NN:
     def train_network(self, x_train, y_train, opt='adam'):
         self.model.compile(loss='mae', optimizer='adam', metrics=['mae'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=200)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=50)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
         history = self.model.fit([x_train, x_train[:,0,:]], [y_train],
-                        batch_size=self.batch_size, validation_split=0.2, callbacks=[early_stopping, checkpoint],
-                        epochs = self.epochs, verbose=2, shuffle=True)
+                        batch_size=self.batch_size, validation_split=0.3, callbacks=[early_stopping, checkpoint],
+                        epochs = self.epochs, verbose=2, shuffle=False)
 
         return history.history, self.model
 

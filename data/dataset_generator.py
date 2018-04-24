@@ -48,7 +48,7 @@ def Bessaker_dataset(data_path):
 
         # Sum produksjon
         df['TS-Straum066_BessVind_Inn'],
-        df['TargetBessaker'].astype('d')
+        ddf['/TS-Straum066_BessVind_Inn'].astype('d').shift(-2) - df['/TS-Straum066_BessVind_Inn'].astype('d')
     ], axis=1).iloc[:-2, :]
 
 def Bessaker_dataset_sparse(data_path):
@@ -62,15 +62,15 @@ def Bessaker_dataset_sparse(data_path):
     return pd.concat([
 
         # Produksjon Bessaker
-        df.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1).iloc[:,0],
+        df.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1).iloc[:,0].astype('d'),# - df.filter(regex='BESS-Bessakerfj\.-G[^S].*-0104', axis=1).iloc[:,0].astype('d').shift(1),
         # Nacelle
-        df.filter(regex='BESS-Bessakerfj.*-0120', axis=1).iloc[:,0],
+        df.filter(regex='BESS-Bessakerfj.*-0120', axis=1).iloc[:,0].astype('d'), # - df.filter(regex='BESS-Bessakerfj.*-0120', axis=1).iloc[:,0].astype('d').shift(1),
 
         # Skomaker stasj
-        df.filter(like='SKOM', axis=1),
+        df.filter(like='SKOM', axis=1).astype('d'),# - df.filter(like='SKOM', axis=1).astype('d').shift(1),
 
         # Værnes
-        df['DNMI_69100...........T0015A3-0120'],
+        df['DNMI_69100...........T0015A3-0120'].astype('d'),# - df['DNMI_69100...........T0015A3-0120'].astype('d').shift(1),
         # Alle værstasjoner med alle målinger
         # df.filter(like='DNMI', axis=1),
 
@@ -87,14 +87,14 @@ def Bessaker_dataset_sparse(data_path):
         # df['DNMI_72580...........T0015A3-0120'],
 
         # Arome values
-        df.filter(like='arome_wind', axis=1).iloc[:,0:2],
+        df.filter(like='arome_wind', axis=1).iloc[:,0:2].astype('d'),# - df.filter(like='arome_wind', axis=1).astype('d').iloc[:,0:2].shift(1),
 
         # Storm vind måling
-        df.filter(like='STORM-Bess', axis=1).shift(-2),
+        df.filter(like='STORM-Bess', axis=1).astype('d').shift(-2),# - df.filter(like='STORM-Bess', axis=1).astype('d').shift(-1),
 
         # Sum produksjon
-        df['TS-Straum066_BessVind_Inn'],
-        df['TargetBessaker'].astype('d')
+        df['TS-Straum066_BessVind_Inn'].astype('d'),
+        df['/TS-Straum066_BessVind_Inn'].astype('d').shift(-2) - df['/TS-Straum066_BessVind_Inn'].astype('d')
     ], axis=1).iloc[:-2, :]
 
 
