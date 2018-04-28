@@ -57,11 +57,11 @@ class NN_dual:
     def build_model(self, input_dim, output_dim):
         input_layer = Input(shape=(input_dim,))
 
-        x = self.dense_block(input_layer, 256, False, 0)
-        x = self.dense_block(x, 128, False, 0)
-        x = self.dense_block(x, 64, True, 0)
+        # x = self.dense_block(input_layer, 256, False, 0)
+        # x = self.dense_block(input_layer, 128, False, 0)
+        x = self.dense_block(input_layer, 64, False, 0)
         x = self.dense_block(x, 32, False, 0)
-        x = self.dense_block(x, 16, True, 0)
+        x = self.dense_block(x, 16, False, 0)
         x = self.dense_block(x, 8, False, 0)
         x = self.dense_block(x, 2, False, 0)
 
@@ -98,7 +98,7 @@ class NN_dual:
         x = BatchNormalization()(x)
         return LeakyReLU(self.relu_leak)(x)
 
-    def train_network(self, x_train, y_train, opt='adam', validation_split=0.2):
+    def train_network(self, x_train, y_train, opt='adam', validation_split=0.15):
         self.model.compile(loss='mae', optimizer=opt,
                            metrics=['mae'])
 

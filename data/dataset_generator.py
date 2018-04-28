@@ -93,8 +93,8 @@ def Bessaker_dataset_sparse(data_path):
         df.filter(like='STORM-Bess', axis=1).astype('d').shift(-2),# - df.filter(like='STORM-Bess', axis=1).astype('d').shift(-1),
 
         # Sum produksjon
-        df['TS-Straum066_BessVind_Inn'].astype('d'),
-        df['/TS-Straum066_BessVind_Inn'].astype('d').shift(-2) - df['/TS-Straum066_BessVind_Inn'].astype('d')
+        df['BESS-Straum066KV-ut-T4045A3A-0106'],
+        df['TargetBessaker'].astype('d')
     ], axis=1).iloc[:-2, :]
 
 
@@ -126,7 +126,7 @@ def Valsnes_dataset(data_path):
 
         # ØRLAND III (Koordinater: 63.705, 9.611)
         # df['DNMI_71550...........T0015A3-0120'],
-        df.filter(like='DNMI_71550',axis=1),
+        df.filter(like='DNMI_71550', axis=1),
 
         # HALTEN FYR ( Kordinater: 64.173, 9.405 )
         # df['DNMI_71850...........T0015A3-0120'],
@@ -147,8 +147,8 @@ def Valsnes_dataset(data_path):
         df.filter(like='STORM-Vals', axis=1).shift(-2),
 
         # Sum produksjon
-        df['TS-Straum066_BessVind_Inn'],
-        df['Target'].astype('d')
+        df["## =-%'VALS-Valsneset..-GS-T4015A3 -0104'*0.96"],
+        df['TargetValsnes'].astype('d')
     ], axis=1).iloc[:-2, :]
 
 

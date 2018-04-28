@@ -6,9 +6,7 @@ import time
 import datetime
 import h5py
 
-import xgboost as xgb
-
-from util.processing import process_dataset_lstm, process_dataset_nn, process_dataset_conv_nn
+from util.processing import process_dataset_lstm, process_dataset_nn, process_dataset_conv_nn, process_dataset_nn_last_month
 from util.visualization import visualize_loss_history
 from util.logging import write_results
 from data.dataset_generator import *
@@ -40,9 +38,37 @@ model_path = os.path.join('checkpoint_model.h5')
 park = 'Bessaker large'
 latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
+dataset_bess = Bessaker_dataset(latest_scream_dataset_path)
+dataset_vals = Valsnes_dataset(latest_scream_dataset_path)
 
 dataset = Bessaker_dataset_sparse(latest_scream_dataset_path)
 dataset, target = create_dataset_history(dataset, history_length=12)
+
+# datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
+# datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
+# datapath = os.path.join('data', park)
+
+# tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
+# arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
+model_path = os.path.join('checkpoint_model.h5')
+
+# tek_out_path = os.path.join('data', 'tek_out.csv')
+# dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
+
+# dataset = generate_bessaker_large_dataset(tek_out_path, history_length=12)
+# dataset = dataset.dropna()
+
+
+# dataset = generate_bessaker_large_dataset(datapath)
+
+# # Extracting indices of most important features
+# dataset = dataset.drop(['BESS-Bessakerfj.-GS-T4015A3 -0104'], axis=1)
+# dataset = feature_importance(
+#     dataset, scope=3000, num_features=40, print_=True)
+# exit(0)
+
+# visualize_loss_history('M03-D21_h20-m07-s13')
+# exit(0)
 
 # Selection of gpu
 parser = argparse.ArgumentParser(
@@ -83,10 +109,10 @@ def visualize_training_buckets(file_path):
     buckets = history['buckets'].value
     evaluations = history['evaluations'].value
 
-    plt.plot(buckets[1:], evaluations[1:], 'bo')
-    plt.title('Network training loss for different dataset sizes')
+    plt.plot(buckets[3:], evaluations[3:], 'bo')
+    plt.title('Network training loss for different dataset sizes, 2500 Epochs')
     plt.ylabel('MAE')
-    plt.xlabel('Dataset sizes')
+    plt.xlabel('number of samples')
     # plt.legend(metrics, loc='upper right')
     # if (start != None) and (end != None):
     #     plt.xlim(start, end)
@@ -133,10 +159,12 @@ dropouts = [0.2, 0.3, 0.4, 0.5]
 lstm_layers = [64, 32, 16, 8]
 
 
-def execute_network_simple(dataset, note, epochs, dropoutrate=0, opt='adam', write_log=False):
+def execute_network_simple(dataset, note, epochs, dropoutrate=0.25, opt='adam', write_log=False):
 
-    x_train, x_test, y_train, y_test = process_dataset_nn(
-        dataset, testsplit=testsplit)
+    # x_train, x_test, y_train, y_test = process_dataset_nn(
+    #     dataset, testsplit=testsplit)
+    x_train, x_test, y_train, y_test = process_dataset_nn_last_month(
+        dataset)
 
     num_features = x_train.shape[1]
     num_targets = y_train.shape[1]
@@ -211,21 +239,21 @@ def execute_network_lstm(dataset, note, layers, epochs, dropoutrate=0.3, opt='ad
                       None, evaluation, metric_names, epochs, opt, dropoutrate, ahed=1, back=6)
 
 
-def execute_random_forest(dataset, notes):
+# def execute_random_forest(dataset, notes):
 
-    x_train, x_test, y_train, y_test = process_dataset_nn(
-        dataset, testsplit=testsplit)
+#     x_train, x_test, y_train, y_test = process_dataset_nn(
+#         dataset, testsplit=testsplit)
 
-    num_features = x_train.shape[1]
-    num_targets = y_train.shape[1]
+#     num_features = x_train.shape[1]
+#     num_targets = y_train.shape[1]
 
-    forest = RandomForest_featureimportance()
+#     forest = RandomForest_featureimportance()
 
-    forest.train(x_train, y_train)
+#     forest.train(x_train, y_train)
 
-    evaluation = forest.test(x_test, y_test)
+#     evaluation = forest.test(x_test, y_test)
 
-    print('Test evaluation on random forest: {}'.format(evaluation))
+#     print('Test evaluation on random forest: {}'.format(evaluation))
 
 
 def execute_xgb(dataset, notes):
@@ -278,19 +306,20 @@ def execute_conv_network(dataset, target, note, write_log=False):
 # execute_network_advanced(
 #     dataset, 'training on network forest', best_network, epochs, write_log=True)
 
-# execute_network_advanced(
-    # dataset, 'training best network forest, only 38700', best_network, epochs, write_log=True)
-
-# visualize_training_buckets('training_data_buckets_1st_2000e.hdf5')
+# evaluation = execute_network_simple(
+#     dataset_bess, 'Simple network, testing on last month', epochs, write_log=True)
 
 # evaluation = execute_network_simple(
-#     dataset, 'Training simple network with new dataset and dropout', epochs, write_log=True)
-# exit(0)
-# data_buckets = [200, 500, 1000, 2000,
-#                 4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset.shape[0]]
-# evaluation_list = []
-# for i, bucket in enumerate(data_buckets):
-#     subdataset = dataset[0:bucket]
+#     dataset_vals, 'Simple network, testing on last month', epochs, write_log=True)
+
+# visualize_training_buckets('large test buckets.hdf5')
+
+
+data_buckets = [2000,
+                4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset_vals.shape[0]]
+evaluation_list = []
+for i, bucket in enumerate(data_buckets):
+    subdataset = dataset_vals[0:bucket]
 
 #     print(subdataset.shape[0])
 
@@ -299,12 +328,20 @@ def execute_conv_network(dataset, target, note, write_log=False):
 
 #     evaluation_list.append(evaluation[0])
 
-# with h5py.File('large test buckets.hdf5', 'w') as f:
-#     print('Saving all model evaluations in h5 file')
-#     f.create_dataset('buckets', data=data_buckets)
-#     f.create_dataset('evaluations', data=evaluation_list)
+with h5py.File('slim network, last attempt.hdf5', 'w') as f:
+    print('Saving all model evaluations in h5 file')
+    f.create_dataset('buckets', data=data_buckets)
+    f.create_dataset('evaluations', data=evaluation_list)
 
-# exit(0)
+evaluation = execute_network_simple(
+    dataset_bess, 'Simple - bess (month)', epochs, write_log=True)
+# execute_network_advanced(
+#     dataset_bess, 'Advanced - bess (month)', best_network, epochs, write_log=True)
+evaluation = execute_network_simple(
+    dataset_vals, 'Simple - vals (month)', epochs, write_log=True)
+# execute_network_advanced(
+#     dataset_vals, 'Advanced - vals (month)', best_network, epochs, write_log=True)
+exit(0)
 
 # execute_network_advanced(
 #     dataset, 'training on network forest', network_forest, epochs, write_log=True)
