@@ -42,7 +42,7 @@ dataset_bess = Bessaker_dataset(latest_scream_dataset_path)
 dataset_vals = Valsnes_dataset(latest_scream_dataset_path)
 
 dataset = Bessaker_dataset_sparse(latest_scream_dataset_path)
-dataset, target = create_dataset_history(dataset, history_length=12)
+dataset, target = create_dataset_history(dataset, history_length=12, future_length=3)
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
@@ -90,17 +90,6 @@ decay = 1e-6
 momentum = 0.9
 
 ######################################
-
-
-# print('Beginning model training on the path: {}'.format(model_path))
-# print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
-
-# Dense
-# x_train, x_test, y_train, y_test = process_dataset_nn(
-#     dataset,
-#     testsplit=testsplit
-# )
-
 
 def visualize_training_buckets(file_path):
 
@@ -273,6 +262,8 @@ def execute_conv_network(dataset, target, note, write_log=False):
 
     x_train, x_test, y_train, y_test = process_dataset_conv_nn(dataset, target, testsplit=testsplit)
     
+    x_train_prod = x_train
+
     history_length = np.shape(x_train)[1]
     num_features = np.shape(x_train)[2]
 

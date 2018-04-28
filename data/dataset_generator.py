@@ -162,22 +162,19 @@ def Valsnes_dataset(data_path):
 ## @return     data            3D numpy array with data with the form (row, time, column) that matches
 ##                             the order used for keras conv1D nets.
 ## @return     target          Pandas series with target data.
-def create_dataset_history(dataframe, history_length):
-
+def create_dataset_history(dataframe, history_length, future_length):
 
     history_data = []
 
     # Create a third dimension to represent time. Target has to be dropped
     # to stay 1 dimensional. Here I assume the last column is target.
     data_without_target = dataframe.drop([dataframe.columns[-1]],axis=1)
-    history_data.append(data_without_target.as_matrix())
 
-    for i in range(1,history_length):
-        history_data.append(data_without_target.shift(i).as_matrix())
+    for i in range(-history_length, future_length):
+        history_data.append(data_without_target.shift(-i).as_matrix())
 
     data = np.stack(history_data, axis=1).astype(np.float64)
     target = dataframe[dataframe.columns[-1]]
-
     
     # Remove rows with nan from data
     rows_with_nan = np.argwhere(np.isnan(data))[:,0]
@@ -185,9 +182,12 @@ def create_dataset_history(dataframe, history_length):
 
     data = np.delete(data, rows_with_nan, axis=0)
 
-
     # Remove the corresponding rows from target
     index_with_nan = target.index[[rows_with_nan]]
     target = target.drop(index_with_nan)
-    
+
     return data, target
+
+# 1. Split dataset
+# 2. Create relevant histories (12 for prod), (+-3 for weather)
+# 3. Create relevant conv network structure

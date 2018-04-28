@@ -21,7 +21,7 @@ class Conv_NN:
         self.epochs = epochs
         self.model_path = model_path
 
-    def build_model(self, history_length, num_features, l2_reg=0):
+    def build_model(self, history_length, num_history_features, num_single_features, l2_reg=0):
         
         history_input = Input(shape=(history_length, num_features), name='history_input')
 
