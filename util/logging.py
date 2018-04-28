@@ -33,8 +33,8 @@ def write_results(park, model_arch, note, num_features, hist_loss, results, metr
 
     # Save hyperparameter info (and what not) in txt file
     print()
-    # if model_arch != None:
-    #     model_arch.summary(print_fn=lambda x: logfile.write(x + '\n'))
+    if model_arch != None:
+        model_arch.summary(print_fn=lambda x: logfile.write(x + '\n'))
 
     logfile.write('\n\n' + park + '\n')
 

@@ -16,7 +16,7 @@ def feature_target_split(dataset):
     data_x = dataset.iloc[:, :-1]
     data_y = dataset.iloc[:, -1:]
 
-    return data_x, data_y.values
+    return data_x, data_y
 
 
 def feature_single_target_split(dataset):
@@ -32,31 +32,6 @@ def feature_single_target_split(dataset):
 # If PCA option is True, PCA will be performed on the features as well
 # ALl returned values are NDArrays
 
-
-def process_dataset_nn(dataset, testsplit=0.8, pca=False):
-    data_x, data_y = feature_target_split(dataset)
-    if pca:
-        data_x = extract_PCA_features(data_x, n_components=40)
-    x_train, x_test, y_train, y_test = train_test_split(
-        data_x, data_y, test_size=1-testsplit, random_state=1745)
-
-def process_dataset_conv_nn(dataset, target, testsplit=0.8):
-   
-
-    x_train, x_test, y_train, y_test = train_test_split(
-        dataset, target, test_size=1-testsplit, shuffle=False) #random_state=1745)
-    print('Length of test set is ', len(y_test))
-    
-    scaler = MinMaxScaler(copy=True, feature_range=(0, 1))
-    scaler.fit(np.squeeze(x_train[:,0,:]))
-
-    for i in range(0,np.shape(x_train)[1]):
-        x_train[:,i,:] = scaler.transform(x_train[:,i,:])
-        x_test[:,i,:] = scaler.transform(x_test[:,i,:])
-
-    return x_train, x_test, y_train, y_test
-
-
 def process_dataset_nn(dataset, testsplit=0.8, pca=False, single_targets=False):
     if not single_targets:
         data_x, data_y = feature_target_split(dataset)
@@ -67,15 +42,14 @@ def process_dataset_nn(dataset, testsplit=0.8, pca=False, single_targets=False):
         data_x = extract_PCA_features(data_x, n_components=40)
 
     x_train, x_test, y_train, y_test = train_test_split(
-        data_x, data_y, test_size=1-testsplit, random_state=1745)
-
+        data_x, data_y, test_size=1-testsplit, shuffle=False) #random_state=1745)
     print('Loaded training and test data with shape {} and {}, respectively'.format(
         x_train.shape, y_train.shape))
 
     scaler = MinMaxScaler(copy=True, feature_range=(0, 1))
     scaler.fit(x_train)
-    x_train = scaler.transform(x_train)
-    x_test = scaler.transform(x_test)
+    x_train = DataFrame(data=scaler.transform(x_train), columns=x_train.columns)
+    x_test = DataFrame(data=scaler.transform(x_test), columns=x_test.columns)
 
     return x_train, x_test, y_train, y_test
 

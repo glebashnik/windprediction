@@ -21,49 +21,61 @@ class Conv_NN:
         self.epochs = epochs
         self.model_path = model_path
 
-    def build_model(self, history_length, num_history_features, num_single_features, l2_reg=0):
+    def build_model(self, production_length, forecast_length, num_features):
         
-        history_input = Input(shape=(history_length, num_features), name='history_input')
+        production_input = Input(shape=(production_length, 1), name='history_input')
 
-        prod_conv = Conv1D(filters=8, kernel_size=2, padding='same')(history_input)
+        prod_conv = Conv1D(filters=8, kernel_size=2, padding='same')(production_input)
         prod_conv = LeakyReLU(alpha=0.2)(prod_conv)
+        prod_pool = MaxPooling1D(pool_size=4)(prod_conv)
+        # prod_conv = Conv1D(filters=16, kernel_size=2, padding='same')(prod_pool)
+        # prod_conv = LeakyReLU(alpha=0.2)(prod_conv)
+        # prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
+        prod = Flatten()(prod_pool)
+        prod = Dropout(0.2)(prod)
 
-        prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
-        prod_conv = Conv1D(filters=16, kernel_size=2, padding='same')(prod_pool)
-        prod_conv = LeakyReLU(alpha=0.2)(prod_conv)
+        forecast_input = Input(shape=(forecast_length, 2), name='forecast_input')
 
-        prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
-        flat = Flatten()(prod_pool)
-        flat = Dropout(0.2)(flat)
+        forecast_conv = Conv1D(filters=8, kernel_size=2, padding='same')(forecast_input)
+        forecast_conv = LeakyReLU(alpha=0.2)(forecast_conv)
+        forecast_pool = MaxPooling1D(pool_size=4)(forecast_conv)
+        # forecast_conv = Conv1D(filters=16, kernel_size=2, padding='same')(forecast_pool)
+        # forecast_conv = LeakyReLU(alpha=0.2)(forecast_conv)
+        # forecast_pool = MaxPooling1D(pool_size=2)(forecast_conv)
+        forecast = Flatten()(forecast_pool)
+        forecast = Dropout(0.2)(forecast)       
+
         single_input = Input(shape=(num_features,))
-        total_input = concatenate([flat, single_input]) 
-        x = Dense(64)(total_input)
+        total_input = concatenate([prod, forecast, single_input]) 
+        x = Dense(64)(single_input)
         x = LeakyReLU(alpha=0.2)(x)
         x = Dropout(0.5)(x)
-        # x = Dense(32)(x)
-        # x = LeakyReLU(alpha=0.2)(x)
-        # x = Dropout(0.4)(x)
-        x = Dense(16)(x)
+        x = Dense(32)(x)
+        x = LeakyReLU(alpha=0.2)(x)
+        x = Dropout(0.4)(x)
+        total_input = concatenate([prod, forecast, x])
+
+        x = Dense(16)(total_input)
         x = LeakyReLU(alpha=0.2)(x)
         x = Dropout(0.2)(x)
-        # x = Dense(8)(x)
-        # x = LeakyReLU(alpha=0.2)(x)
+
+        x = Dense(8)(x)
+        x = LeakyReLU(alpha=0.2)(x)
         output = Dense(1)(x)
 
-        self.model = Model(inputs=[history_input, single_input], outputs=[output])
+        self.model = Model(inputs=[production_input, forecast_input, single_input], outputs=[output])
         return self.model
 
 
     def train_network(self, x_train, y_train, opt='adam'):
         self.model.compile(loss='mae', optimizer='adam', metrics=['mae'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=50)
         checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
-        history = self.model.fit([x_train, x_train[:,0,:]], [y_train],
-                        batch_size=self.batch_size, validation_split=0.3, callbacks=[early_stopping, checkpoint],
-                        epochs = self.epochs, verbose=2, shuffle=False)
+        history = self.model.fit(x_train, y_train,
+                        batch_size=self.batch_size, validation_split=0.1, callbacks=[checkpoint],
+                        epochs = 300, verbose=2)
 
         return history.history, self.model
 
@@ -71,7 +83,7 @@ class Conv_NN:
         self.model.compile(loss='mae', optimizer='adam',metrics=['mae'])
         self.model.load_weights(self.model_path)
         
-        evaluation = self.model.evaluate([x_test, x_test[:,0,:]], y_test)
+        evaluation = self.model.evaluate(x_test, y_test)
         return evaluation, self.model.metrics_names
 
     #RMSE loss function (missing in keras library)

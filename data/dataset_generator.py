@@ -47,8 +47,8 @@ def Bessaker_dataset(data_path):
         df.filter(like='STORM-Bess', axis=1).shift(-2),
 
         # Sum produksjon
-        df['TS-Straum066_BessVind_Inn'],
-        ddf['/TS-Straum066_BessVind_Inn'].astype('d').shift(-2) - df['/TS-Straum066_BessVind_Inn'].astype('d')
+        df['BESS-Straum066KV-ut-T4045A3A-0106'],
+        df['TargetBessaker'].astype('d')
     ], axis=1).iloc[:-2, :]
 
 def Bessaker_dataset_sparse(data_path):
@@ -165,29 +165,40 @@ def Valsnes_dataset(data_path):
 def create_dataset_history(dataframe, history_length, future_length):
 
     history_data = []
-
     # Create a third dimension to represent time. Target has to be dropped
     # to stay 1 dimensional. Here I assume the last column is target.
-    data_without_target = dataframe.drop([dataframe.columns[-1]],axis=1)
 
-    for i in range(-history_length, future_length):
-        history_data.append(data_without_target.shift(-i).as_matrix())
-
+    for i in range(-history_length, future_length+1):
+        history_data.append(dataframe.shift(-i).as_matrix())
     data = np.stack(history_data, axis=1).astype(np.float64)
-    target = dataframe[dataframe.columns[-1]]
-    
-    # Remove rows with nan from data
-    rows_with_nan = np.argwhere(np.isnan(data))[:,0]
-    rows_with_nan = np.unique(rows_with_nan)
 
-    data = np.delete(data, rows_with_nan, axis=0)
+    # If original data was only one column the third dimension disappears.
+    # Adding it back here
+    if(len(data.shape)) == 2:
+        data = np.expand_dims(data, axis=2)
 
-    # Remove the corresponding rows from target
-    index_with_nan = target.index[[rows_with_nan]]
-    target = target.drop(index_with_nan)
-
-    return data, target
+    return data
 
 # 1. Split dataset
 # 2. Create relevant histories (12 for prod), (+-3 for weather)
 # 3. Create relevant conv network structure
+
+def add_production_and_forecast_history_bessaker(dataframe, y, production_length, forecast_start, forecast_stop):
+    forecastDF = pd.concat([dataframe.filter(like='STORM-Bess', axis=1).shift(-2)]) ##, dataframe.filter(like='arome_wind', axis=1).shift(-2)
+    productionDF = dataframe['BESS-Straum066KV-ut-T4045A3A-0106']
+
+    forecast = create_dataset_history(forecastDF, forecast_start, forecast_stop)
+    production = create_dataset_history(productionDF, production_length, 0)
+
+    # dataframe.drop(labels='BESS-Straum066KV-ut-T4045A3A-0106', axis=1, inplace = True)
+    # dataframe.drop(labels=forecastDF.columns, axis=1, inplace = True)
+
+    lower_bound = forecast_start if (forecast_start > production_length) else production_length
+    upper_bound = forecast_stop + 2 # To account for the original shift
+
+    forecast = forecast[lower_bound+1:-upper_bound,:,:]
+    production = production[lower_bound+1:-upper_bound,:,:]
+    dataframe = dataframe.iloc[lower_bound+1:-upper_bound,:]
+    y = y.iloc[lower_bound+1:-upper_bound,:]
+
+    return production, forecast, dataframe, y

@@ -6,7 +6,7 @@ import time
 import datetime
 import h5py
 
-from util.processing import process_dataset_lstm, process_dataset_nn, process_dataset_conv_nn, process_dataset_nn_last_month
+from util.processing import process_dataset_lstm, process_dataset_nn
 from util.visualization import visualize_loss_history
 from util.logging import write_results
 from data.dataset_generator import *
@@ -39,10 +39,9 @@ park = 'Bessaker large'
 latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
 dataset_bess = Bessaker_dataset(latest_scream_dataset_path)
-dataset_vals = Valsnes_dataset(latest_scream_dataset_path)
+# dataset_vals = Valsnes_dataset(latest_scream_dataset_path)
 
-dataset = Bessaker_dataset_sparse(latest_scream_dataset_path)
-dataset, target = create_dataset_history(dataset, history_length=12, future_length=3)
+dataset = dataset_bess
 
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
@@ -258,22 +257,34 @@ def execute_xgb(dataset, notes):
     pred = model.predict(test_data)
     print("MAE is ", np.average(np.abs(pred-y_test)))
 
-def execute_conv_network(dataset, target, note, write_log=False):
+def execute_conv_network(dataset, note, write_log=False):
+    x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=testsplit)
 
-    x_train, x_test, y_train, y_test = process_dataset_conv_nn(dataset, target, testsplit=testsplit)
-    
-    x_train_prod = x_train
+    y_testDF = DataFrame(y_test)
+    diff = (y_testDF - y_testDF.shift(2)).dropna()
+    print('Old method error is: ', np.mean(abs(diff.as_matrix())))
 
-    history_length = np.shape(x_train)[1]
-    num_features = np.shape(x_train)[2]
+    production_length = 12
+    forecast_start = 4
+    forecast_stop = 4
+    forecast_length = forecast_start + forecast_stop + 1
+
+    x_prod, x_forecast, x, y = add_production_and_forecast_history_bessaker(x_train, y_train, \
+        production_length=production_length, forecast_start=forecast_start, forecast_stop=forecast_stop)
 
     network = Conv_NN(epochs=epochs, batch_size=batch_size, model_path=model_path)
 
-    model_architecture = network.build_model(history_length, num_features)
-    model_architecture.summary()
-    hist_loss, model = network.train_network(x_train, y_train, opt=opt)
+    num_features = len(x.columns)
 
-    evaluation, metric_names = network.evaluate(x_test, y_test)
+    model_architecture = network.build_model(production_length+1, forecast_length, num_features)
+    model_architecture.summary()
+
+    hist_loss, model = network.train_network([x_prod, x_forecast, x], [y], opt=opt)
+
+    x_prod, x_forecast, x, y = add_production_and_forecast_history_bessaker(x_test, y_test, 
+        production_length=production_length, forecast_start=forecast_start, forecast_stop=forecast_stop)
+
+    evaluation, metric_names = network.evaluate([x_prod, x_forecast, x], [y])
 
     if write_log:
         dropoutrate = 0 
@@ -306,11 +317,11 @@ def execute_conv_network(dataset, target, note, write_log=False):
 # visualize_training_buckets('large test buckets.hdf5')
 
 
-data_buckets = [2000,
-                4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset_vals.shape[0]]
-evaluation_list = []
-for i, bucket in enumerate(data_buckets):
-    subdataset = dataset_vals[0:bucket]
+# data_buckets = [2000,
+#                 4000, 6000, 10000, 16000, 20000, 24000, 28000, dataset_vals.shape[0]]
+# evaluation_list = []
+# for i, bucket in enumerate(data_buckets):
+#     subdataset = dataset_vals[0:bucket]
 
 #     print(subdataset.shape[0])
 
@@ -319,20 +330,20 @@ for i, bucket in enumerate(data_buckets):
 
 #     evaluation_list.append(evaluation[0])
 
-with h5py.File('slim network, last attempt.hdf5', 'w') as f:
-    print('Saving all model evaluations in h5 file')
-    f.create_dataset('buckets', data=data_buckets)
-    f.create_dataset('evaluations', data=evaluation_list)
+# with h5py.File('slim network, last attempt.hdf5', 'w') as f:
+#     print('Saving all model evaluations in h5 file')
+#     f.create_dataset('buckets', data=data_buckets)
+#     f.create_dataset('evaluations', data=evaluation_list)
 
-evaluation = execute_network_simple(
-    dataset_bess, 'Simple - bess (month)', epochs, write_log=True)
-# execute_network_advanced(
-#     dataset_bess, 'Advanced - bess (month)', best_network, epochs, write_log=True)
-evaluation = execute_network_simple(
-    dataset_vals, 'Simple - vals (month)', epochs, write_log=True)
-# execute_network_advanced(
-#     dataset_vals, 'Advanced - vals (month)', best_network, epochs, write_log=True)
-exit(0)
+# evaluation = execute_network_simple(
+#     dataset_bess, 'Simple - bess (month)', epochs, write_log=True)
+# # execute_network_advanced(
+# #     dataset_bess, 'Advanced - bess (month)', best_network, epochs, write_log=True)
+# evaluation = execute_network_simple(
+#     dataset_vals, 'Simple - vals (month)', epochs, write_log=True)
+# # execute_network_advanced(
+# #     dataset_vals, 'Advanced - vals (month)', best_network, epochs, write_log=True)
+# exit(0)
 
 # execute_network_advanced(
 #     dataset, 'training on network forest', network_forest, epochs, write_log=True)
@@ -349,6 +360,6 @@ exit(0)
 # execute_network_advanced(
 #     dataset, 'Training on feature importance adv dataset', layers[1], epochs, write_log=True)
 
-execute_conv_network(dataset, target, 'Conv network', write_log=True)
+execute_conv_network(dataset, 'Conv network', write_log=True)
 
 # execute_xgb(dataset, 'XG BOOST')
