@@ -28,9 +28,9 @@ class Conv_NN:
         prod_conv = Conv1D(filters=8, kernel_size=2, padding='same')(production_input)
         prod_conv = LeakyReLU(alpha=0.2)(prod_conv)
         prod_pool = MaxPooling1D(pool_size=4)(prod_conv)
-        # prod_conv = Conv1D(filters=16, kernel_size=2, padding='same')(prod_pool)
-        # prod_conv = LeakyReLU(alpha=0.2)(prod_conv)
-        # prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
+        prod_conv = Conv1D(filters=16, kernel_size=2, padding='same')(prod_pool)
+        prod_conv = LeakyReLU(alpha=0.2)(prod_conv)
+        prod_pool = MaxPooling1D(pool_size=2)(prod_conv)
         prod = Flatten()(prod_pool)
         prod = Dropout(0.2)(prod)
 
@@ -39,9 +39,9 @@ class Conv_NN:
         forecast_conv = Conv1D(filters=8, kernel_size=2, padding='same')(forecast_input)
         forecast_conv = LeakyReLU(alpha=0.2)(forecast_conv)
         forecast_pool = MaxPooling1D(pool_size=4)(forecast_conv)
-        # forecast_conv = Conv1D(filters=16, kernel_size=2, padding='same')(forecast_pool)
-        # forecast_conv = LeakyReLU(alpha=0.2)(forecast_conv)
-        # forecast_pool = MaxPooling1D(pool_size=2)(forecast_conv)
+        forecast_conv = Conv1D(filters=16, kernel_size=2, padding='same')(forecast_pool)
+        forecast_conv = LeakyReLU(alpha=0.2)(forecast_conv)
+        forecast_pool = MaxPooling1D(pool_size=2)(forecast_conv)
         forecast = Flatten()(forecast_pool)
         forecast = Dropout(0.2)(forecast)       
 
@@ -74,8 +74,8 @@ class Conv_NN:
 
         # Train the model
         history = self.model.fit(x_train, y_train,
-                        batch_size=self.batch_size, validation_split=0.1, callbacks=[checkpoint],
-                        epochs = 300, verbose=2)
+                        batch_size=self.batch_size, validation_split=0.2, callbacks=[checkpoint],
+                        epochs = 300, verbose=2, shuffle=False)
 
         return history.history, self.model
 

@@ -38,7 +38,7 @@ model_path = os.path.join('checkpoint_model.h5')
 park = 'Bessaker large'
 latest_scream_dataset_path = os.path.join(
     'data', park, 'dataset_20130818-20180420.csv')
-dataset_bess = Bessaker_dataset(latest_scream_dataset_path)
+dataset_bess = Bessaker_dataset_sparse(latest_scream_dataset_path)
 # dataset_vals = Valsnes_dataset(latest_scream_dataset_path)
 
 dataset = dataset_bess
@@ -84,7 +84,7 @@ look_back = 6
 look_ahead = 1
 epochs = 1000
 batch_size = 64
-lr = 0.001
+lr = 0.0001
 decay = 1e-6
 momentum = 0.9
 
