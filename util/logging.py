@@ -2,23 +2,25 @@
 # in the 'result_log' folder
 
 
-def write_results(file,layers,results,metrics, epochs=0, optimizer='adam', dropoutrate= 0, ahed=None, back=None):
-    file.write('\nNN_forest:\n')
 
-    if (ahed != None) and (back != None): file.write('\nLookback: {} Lookahed: {}'.format(ahed,back))
+def write_results(park, model_arch, note, num_features, hist_loss, results, metrics, epochs, optimizer='adam', dropoutrate=0, ahed=None, back=None):
 
-    file.write('\nOptimizer: ' + optimizer)
+    # Initialize folders and paths
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('M%m-D%d_h%H-m%M-s%S')
 
-    file.write('\nDropoutrate: {}'.format(dropoutrate))
+    basename = os.path.join('result_log', st)
 
-    file.write('\nTrained {} epochs\n'.format(epochs))
-    
-    for i,item in enumerate(metrics):
-        file.write('  ' + item)
-    file.write('\n')
+    if not os.path.isdir(basename):
+        os.mkdir(basename)
 
-    for i,item in enumerate(results):
-        file.write("{}".format(item) + ', ')
+    log_name = os.path.join(basename, 'results_{}.txt'.format(st))
+    log_name_h5 = os.path.join(basename, 'results_{}.h5'.format(st))
+    logfile = open(log_name, 'w')
+
+    # Save model to folder
+    copyfile('checkpoint_model.h5', os.path.join(
+        basename, 'checkpoint_model.h5'))
 
     # Save loss history as h5 file
     if not hist_loss == None:
