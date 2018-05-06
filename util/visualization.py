@@ -1,7 +1,6 @@
-import matplotlib.pyplot as plt
-import h5py
-import os
+from matplotlib import pyplot
 
+<<<<<<< HEAD
 
 # def compare_predictions(self, x, y):
 #     lines = pyplot.plot(x, 'r', y, 'b')
@@ -65,3 +64,9 @@ if __name__ == '__main__':
     # visualize_loss_history(network)
     exit(0)
     # visualize_training_buckets(os.path.join('..','training_data_buckets.hdf5'))
+=======
+def compare_predictions(self, x, y):
+    lines = pyplot.plot(x, 'r', y, 'b')
+    pyplot.setp(lines, linewidth=0.5)
+    pyplot.show()
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a

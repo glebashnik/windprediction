@@ -39,7 +39,7 @@ class NN_forest:
         out_avg = Average()(network_list)
 
         self.model = Model(inputs = input_layer, outputs = out_avg)
-        return self.model.summary()
+        # self.model.summary()
 
 
 

@@ -99,7 +99,7 @@ class NN_feedback:
 
             #Initialization for beginning of epoch
             pred_error = np.zeros(self.batch_size)
-            # progbar = keras_generic_utils.Progbar(num_samples)
+            progbar = keras_generic_utils.Progbar(num_samples)
             start = time.time()
             
 

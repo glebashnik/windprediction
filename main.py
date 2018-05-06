@@ -2,20 +2,22 @@ import os
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
-import time
-import datetime
 
+<<<<<<< HEAD
 from util.processing import process_dataset_lstm, process_dataset_nn, process_dataset_conv_nn
 from util.visualization import visualize_loss_history
+=======
+from util.processing import process_dataset_lstm, process_dataset_nn
+from util.visualization import compare_predictions
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 from util.logging import write_results
-from data.dataset_generator import *
-from util.data_analysis import *
 
-# from models.simple_lstm.main import RNN as LSTM
-# from models.lstm_stateful.main import RNN as StatefulLSTM
+from models.simple_lstm.main import RNN as LSTM
+from models.lstm_stateful.main import RNN as StatefulLSTM
 from models.simple_ann.main import NN
 from models.dense_nn_forest.NN_forest import *
 from models.ann_error_feedback.ann_feedback import NN_feedback
+<<<<<<< HEAD
 from models.nn_dual_loss.nn_dual_loss import NN_dual
 from models.lstm_stateful.main import RNN
 from models.lstm_stateful.main import RNN
@@ -24,9 +26,15 @@ from models.conv_nn.conv_nn import Conv_NN
 
 # from keras import optimizers
 from models.random_forest.random_forest import RandomForest
+=======
 
-import h5py
+from keras import optimizers
+from models.random_forest.main import RandomForest
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+
+<<<<<<< HEAD
 tek_path = os.path.join('data/raw', 'vindkraft 130717-160218 TEK met.csv')
 arome_path = os.path.join(
     'data/raw', 'vindkraft 130717-160218 arome korr winddir.csv')
@@ -34,19 +42,32 @@ modelpath = os.path.join('checkpoint_model.h5')
 
 # dataset = generate_bessaker_large_dataset_scratch(
 #     os.path.join('data', 'Bessaker large'))
+=======
+datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
+# datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
+# datapath = os.path.join('data','Bessaker', 'data_bessaker_advanced.csv')
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
+<<<<<<< HEAD
 # datapath = os.path.join('data','Ytre Vikna', 'data_ytrevikna_advanced.csv')
 # datapath = os.path.join('data','Skomakerfjellet', 'data_skomakerfjellet_advanced.csv')
 park = 'Bessaker large'
 
 # datapath = os.path.join('data', park)
+=======
+# datapath = os.path.join('data','Skomakerfjellet', 'pred-compare.csv')
+modelpath = os.path.join('checkpoint_model.h5')
 
-tek_path = os.path.join('rawdata', 'vindkraft 130717-160218 TEK met.csv')
-arome_path = os.path.join('rawdata', 'vindkraft 130717-160218 arome.csv')
-model_path = os.path.join('checkpoint_model.h5')
+try:
+    dataset = pd.read_csv(datapath, sep=';')
+except:
+    print('No data found on: ' + datapath)
+    exit(1)
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 
+
+<<<<<<< HEAD
 tek_out_path = os.path.join('data', 'tek_out.csv')
 # dataset = generate_bessaker_dataset_single_target(tek_path, arome_path)
 
@@ -55,16 +76,20 @@ dataset = dataset.dropna()
 
 
 # dataset = generate_bessaker_large_dataset(datapath)
+=======
 
-# # Extracting indices of most important features
-# dataset = dataset.drop(['BESS-Bessakerfj.-GS-T4015A3 -0104'], axis=1)
-# dataset = feature_importance(
-#     dataset, scope=3000, num_features=40, print_=True)
-# exit(0)
+num_features = len(dataset.columns) -1
+x_train, x_test, y_train, y_test = process_dataset_nn(dataset, testsplit=0.7)
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 
-# visualize_loss_history('M03-D21_h20-m07-s13')
-# exit(0)
+print('Beginning model training on the path:')
+print(datapath)
+print('Number of features: {}\n\n'.format(num_features))
 
+#Hyperparameters for training network
+logfile = open('results.txt','w')
+
+<<<<<<< HEAD
 # Selection of gpu
 parser = argparse.ArgumentParser(
     description='Main script for training av evaluating assorted networks')
@@ -80,11 +105,18 @@ look_back = 6
 look_ahead = 1
 epochs = 1
 batch_size = 64
+=======
+testsplit = 0.8
+look_back = 6
+look_ahead = 1
+epochs = 5000
+batch_size= 64
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 lr = 0.001
 decay = 1e-6
-momentum = 0.9
+momentum=0.9
 
-
+<<<<<<< HEAD
 print('Beginning model training on the path: {}'.format(model_path))
 print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
 
@@ -93,12 +125,25 @@ print('Data loaded with {} attributes\n'.format(len(dataset.columns)))
 #     dataset,
 #     testsplit=testsplit
 # )
+=======
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 
+#Dense 
+x_train, x_test, y_train, y_test = process_dataset_nn(
+    dataset, 
+    testsplit=testsplit
+)
 
 opt = [
+<<<<<<< HEAD
     # optimizers.SGD(lr=lr, decay=decay, momentum=momentum, nesterov=True),
     # optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.0),
     # 'rmsprop',
+=======
+    #optimizers.SGD(lr=lr, decay=decay, momentum=momentum, nesterov=True),
+    #optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.0),
+    #'rmsprop',
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
     'adam'
 ]
 
@@ -109,6 +154,7 @@ opt_name = [
     'adam'
 ]
 
+<<<<<<< HEAD
 # Define networks, dimensions: (models,networks,layers)
 best_network = [
     [(32, False), (16, False), (8, True), (2, False)],
@@ -116,22 +162,25 @@ best_network = [
     [(64, False), (16, False), (6, True), (0, False)],
     [(16, False), (8, False), (8, True), (0, False)],
 ]
+=======
+layers =[
+    [[(32,False),(16,True),(8,False),(2,False)],
+    [(128,False),(64,True),(32,False),(8,False)],
+    [(64,False),(16,True),(6,False),(0,False)],
+    [(16,True),(8,False),(8,False),(0,False)]],
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 
-network_forest = [
-    [(32, False), (16, False), (8, False), (2, False)],
-    [(128, False), (64, False), (32, False), (8, False)],
-    [(64, False), (16, False), (6, False), (0, False)],
-    [(16, False), (8, False), (8, False), (0, False)],
-    [(32, False), (16, False), (8, False), (2, False)],
-    [(64, False), (64, False), (32, False), (16, False)],
-    [(12, False), (6, False), (3, False), (0, False)],
-    [(69, False), (128, False), (32, False), (4, False)],
-]
+    [[(32,False),(16,True),(8,False),(2,False)],
+    [(64,False),(64,True),(32,False),(16,False)],
+    [(12,False),(6,True),(3,False),(0,False)],
+    [(69,False),(128,True),(32,False),(4,False)]],
+    ]
 
+feedback_network = [(32,False),(16,True),(8,False),(2,False)]
 
-feedback_network = [(32, False), (16, True), (8, False), (2, False)]
 dropouts = [0.2, 0.3, 0.4, 0.5]
 
+<<<<<<< HEAD
 lstm_layers = [64, 32, 16, 8]
 
 
@@ -180,14 +229,55 @@ def execute_network_advanced(dataset, note, layers, epochs, dropoutrate=0.3, opt
 
     hist_loss, model = network.train_network(
         x_train=x_train, y_train=y_train, opt=opt)
+=======
+def execute_network(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
+    nn_network = NN_forest(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
 
-    evaluation, metric_names = network.evaluate(
-        x_test, y_test, single_targets=False)
+    nn_network.build_model(input_dim=num_features,model_structure=layers)
 
-    if write_log:
-        write_results(park, model_architecture, note, num_features,
-                      hist_loss, evaluation, metric_names, epochs, opt, dropoutrate)
+    # nn_network.visualize_model()
+    nn_network.train_network(x_train=x_train, y_train=y_train,opt=opt)
+    print('training finished')
+    
+    evaluation, metric_names = nn_network.evaluate(modelpath, x_test, y_test)
+    write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
 
+
+def execute_network_simple(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
+    
+    network = NN_feedback(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
+    network.build_simple_model(input_dim=num_features,model_structure=layers)
+    
+    network.train_network(x_train=x_train, y_train=y_train,opt=opt)
+    print('training finished')
+    
+    evaluation, metric_names = network.evaluate(modelpath, x_test, y_test)
+    write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
+
+
+def execute_network_feedback(x_train, x_test, y_train, y_test, layers, epochs, dropoutrate, opt = 'adam', optname='adam'):
+    
+    network = NN_feedback(batch_size=32, epochs=epochs, dropoutrate=dropoutrate)
+    network.build_model(input_dim=num_features,model_structure=layers)
+    
+    # network.visualize_model()
+    network.train_network(x_train=x_train, y_train=y_train,opt=opt)
+    print('training finished')
+    
+    evaluation, metric_names = network.evaluate(modelpath, x_test, y_test)
+    write_results(logfile, layers, evaluation, metric_names, epochs, optname, dropoutrate)
+
+
+execute_network_simple(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
+exit(0)
+
+execute_network_feedback(x_train, x_test, y_train, y_test, feedback_network, epochs, 0.3)
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
+
+
+for model in layers:
+
+<<<<<<< HEAD
 
 def execute_network_lstm(dataset, note, layers, epochs, dropoutrate=0.3, opt='adam', write_log=False):
 
@@ -318,3 +408,19 @@ exit(0)
 #     dataset, 'Training on feature importance adv dataset', layers[1], epochs, write_log=True)
 
 execute_conv_network(dataset, 'Conv network', write_log=True)
+=======
+    for dropoutrate in dropouts:
+
+        execute_network(x_train, x_test, y_train, y_test, model, epochs, dropoutrate)
+
+        print('Network executed')
+
+
+# for i, opt in enumerate(opt):
+#     for layer_set in layers:
+#         execute_network(x_train, x_test, y_train, y_test, batch_size, layer_set, epochs, opt, opt_name[i])
+
+# model = RandomForest()
+# model.train(x_train, y_train)
+# print(model.predict(x_test, y_test))
+>>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
