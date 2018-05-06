@@ -1,21 +1,8 @@
-<<<<<<< HEAD
 from matplotlib import pyplot
-=======
-import os
-import sys
-# import matplotlib.pyplot as plt
-# import h5py
-# import numpy as np
->>>>>>> cd087be07de353aae2bc8a7580e1149ab0e04a02
-
-<<<<<<< HEAD
-
-# def compare_predictions(self, x, y):
-#     lines = pyplot.plot(x, 'r', y, 'b')
-#     pyplot.setp(lines, linewidth=0.5)
-#     pyplot.show()
 
 
+# Visualizes training loss history of a trained model, the h5 file is 
+# stored in the 'result_log' folder
 def visualize_loss_history(network_sample, start=None, end=None):
 
     history = h5py.File(os.path.join('result_log',
@@ -48,21 +35,21 @@ def visualize_training_buckets(file_path):
     history = h5py.File(file_path, 'r')
 
     buckets = history['buckets'].value
-    evaluations = history['buckets'].value
+    evaluations = history['evaluations'].value
 
-    plt.plot(buckets, evaluations, 'bo')
-    plt.title('Network training loss for different dataset sizes')
+    plt.plot(buckets[3:], evaluations[3:], 'bo')
+    plt.title('Network training loss for different dataset sizes, 2500 Epochs')
     plt.ylabel('MAE')
-    plt.xlabel('Dataset sizes')
+    plt.xlabel('number of samples')
     # plt.legend(metrics, loc='upper right')
     # if (start != None) and (end != None):
     #     plt.xlim(start, end)
     plt.show()
 
 
+
 if __name__ == '__main__':
     print('Visualization script')
-    exit(0)
     try:
         network = sys.argv[1]
     except IndexError:
@@ -71,9 +58,3 @@ if __name__ == '__main__':
 
     # visualize_loss_history(network)
     # visualize_training_buckets(os.path.join('..','training_data_buckets.hdf5'))
-=======
-def compare_predictions(self, x, y):
-    lines = pyplot.plot(x, 'r', y, 'b')
-    pyplot.setp(lines, linewidth=0.5)
-    pyplot.show()
->>>>>>> 6277f428e59c037e60730473841be17577ffdd0a

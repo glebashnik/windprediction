@@ -1,9 +1,9 @@
-# Writes results to log
+# When a model is trained the results and specs of the network is saved in a txt file, located
+# in the 'result_log' folder
+
+
 def write_results(file,layers,results,metrics, epochs=0, optimizer='adam', dropoutrate= 0, ahed=None, back=None):
     file.write('\nNN_forest:\n')
-
-    # for i,item in enumerate(layers):
-    #     file.write(":{} ".format(item))
 
     if (ahed != None) and (back != None): file.write('\nLookback: {} Lookahed: {}'.format(ahed,back))
 
@@ -19,11 +19,6 @@ def write_results(file,layers,results,metrics, epochs=0, optimizer='adam', dropo
 
     for i,item in enumerate(results):
         file.write("{}".format(item) + ', ')
-
-<<<<<<< HEAD
-    # Save model to folder
-    copyfile('checkpoint_model.h5', os.path.join(
-        basename, 'checkpoint_model.h5'))
 
     # Save loss history as h5 file
     if not hist_loss == None:
@@ -62,7 +57,3 @@ def write_results(file,layers,results,metrics, epochs=0, optimizer='adam', dropo
 
     logfile.write('\n')
     logfile.close()
-=======
-    file.write('\n')
-    file.close()
->>>>>>> 6277f428e59c037e60730473841be17577ffdd0a

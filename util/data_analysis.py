@@ -14,6 +14,11 @@ from sklearn.metrics import mean_absolute_error
 
 import matplotlib.pyplot as plt
 
+'''
+
+This script contains functions to perform feature importance investigation and extraction
+
+'''
 
 def extract_data(datapath, normalize = True):
     datapath = datapath
@@ -29,7 +34,6 @@ def extract_data(datapath, normalize = True):
 
     data_x = dataset.iloc[:,:-1]
     data_y = dataset.iloc[:,-1:]
-    #Normalizing data (EXCEPT THE LABEL)
     if normalize:
 
         x_scaler = MinMaxScaler(copy=True,feature_range=(0,1))
@@ -41,7 +45,8 @@ def extract_data(datapath, normalize = True):
     return dataset
 
 
-
+# Pearson analysis of the data, then a number of features are dropped 
+# according to an importance treshold
 def extract_pearson_features(dataset, treshold = 0.5):
 
     pearson_corr = dataset.corr(method='pearson',min_periods = 1)
@@ -50,8 +55,6 @@ def extract_pearson_features(dataset, treshold = 0.5):
     print('\nPearson correlation with total production as target\n')
     print(topcorr)
     print('\n')
-
-
 
     n_dropped = 0
 
@@ -73,7 +76,6 @@ def extract_PCA_features(dataset, n_components = 10):
     data_x = dataset.iloc[:,:-1]
     data_y = dataset.iloc[:,-1:]
 
-
     pca = PCA(n_components=n_components)
     data_x_pca = pca.fit_transform(data_x)
 
@@ -81,8 +83,8 @@ def extract_PCA_features(dataset, n_components = 10):
 
     return data, pca
     
-
-def prediction(data, testsize = 0.15):
+# Standard regression prediction
+def regression_prediction(data, testsize = 0.15):
 
     x_train, x_test, y_train, y_test = train_test_split(data[:,:-1], data[:,-1:], test_size=testsize, random_state=666)
 
@@ -140,17 +142,12 @@ if __name__ == '__main__':
 
     dataset = read_csv(datapath_advanced, index_col=0, sep=';')
     
-
-    
     print(dataset.columns)
 
     new_data = dataset[['BESS-Bessakerfj.-G2-T4015A3 -0104','BESS-Bessakerfj.-G2-T4015A3 -0104']].head()
     new_data.columns = ['production','target']
     
-    print(new_data)
-    # print(singlemill)
-    # series_to_supervised()
-    exit(0)
+
     testsize = 0.15
     n_components = 12
     treshold = 0.7
@@ -176,5 +173,3 @@ if __name__ == '__main__':
 
     # Compare the prediction methods
     visualize([y_test,raw_pred,PCA_pred,pearson_pred],legend=['GT','Raw','PCA','Pearson'],scope = 0.2)
-
-    exit(0)

@@ -15,11 +15,14 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l2
 
 
-class RNN:
+class LSTM_stateful:
 
     def __init__(self, batch_size=32, epochs=100):
         self.batch_size = batch_size
         self.epochs = epochs
+
+        self.model_path = os.path.join('models','lstm_stateful','checkpoint.h5')
+
 
     def build_model(self, input_shape):
         self.model = Sequential()
@@ -85,14 +88,13 @@ class RNN:
     def evaluate(self, x_test, y_test):
         self.model.compile(loss='mae', optimizer='adam',
                            metrics=['mae', 'mse', self.rmse])
-        self.model.load_weights('checkpoint_model.h5')
+        self.model.load_weights(self.model_path)
 
         evaluation = self.model.evaluate(
             x_test, y_test, batch_size=self.batch_size)
 
         return evaluation, self.model.metrics_names
 
-    # RMSE loss function (missing in keras library)
     def rmse_numpy(self, y_true, y_pred):
         return np.sqrt(np.mean(np.square(y_pred - y_true), axis=-1))
 

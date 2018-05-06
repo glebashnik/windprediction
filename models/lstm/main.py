@@ -13,12 +13,16 @@ from keras.regularizers import l2
 
 from keras import optimizers
 
-class RNN:
+class LSTM:
 
     def __init__(self, batch_size=32, epochs=100):
         self.batch_size = batch_size
         self.epochs = epochs
+        self.patience = 300
 
+        self.model_path = os.path.join('models','lstm','checkpoint.h5')
+
+    # Builds a simple lstm network
     def build_model(self, input_shape):
         self.model = Sequential()
         self.model.add(LSTM(16, return_sequences=True, input_shape=input_shape, activation='softsign'))
@@ -26,6 +30,7 @@ class RNN:
         self.model.add(Dense(1))
         self.model.summary()
 
+    # Builds an lstm model with given number of layers
     def build_model_general(self,input_shape, layers):
 
         self.model = Sequential()
@@ -46,35 +51,30 @@ class RNN:
 
     def train_network(self, x_train, y_train, lr = 0.01, opt = 'Adam'):
 
-        # opt = optimizers.SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True)
-
         self.model.compile(loss='mae', optimizer=opt, metrics=['mae','mse',self.rmse])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=30)
-        checkpoint = ModelCheckpoint('checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+        early_stopping = EarlyStopping(monitor='val_loss', patience=self.patience)
+        checkpoint = ModelCheckpoint(self.model_path, monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         self.model.fit(x=x_train, y=y_train, batch_size=self.batch_size, callbacks=[early_stopping], validation_split=0.2, epochs = self.epochs, verbose=1, shuffle=False)
 
         return self.model
 
-    def evaluate(self, model, x_test, y_test, opt):
-        self.model = model
-        # Load best found model
-        self.model.compile(loss='mae', optimizer=opt, metrics=['mae','mse',self.rmse])
-        # self.model.load_weights(model_path)
+    def evaluate(self, x_test, y_test):
+        self.model.compile(loss='mae', optimizer='adam',
+                           metrics=['mae', 'mse', self.rmse])
+        self.model.load_weights(self.model_path)
 
-        evaluation = self.model.evaluate(x_test, y_test, batch_size=self.batch_size)
-
+        evaluation = self.model.evaluate(x_test, y_test)
         return evaluation, self.model.metrics_names
 
-    def predict(self, model_path, x_test):
+    def predict(self, x_test):
         # Load best found model
         self.model.compile(loss='mae', optimizer='adam', metrics=['mae','mse',self.rmse])
-        self.model.load_weights(model_path)
+        self.model.load_weights(self.model_path)
 
         return self.model.predict(x_test, batch_size=self.batch_size)
 
-    #RMSE loss function (missing in keras library)
     def rmse_numpy(self, y_true, y_pred):
         return np.sqrt(np.mean(np.square(y_pred - y_true), axis=-1))
 

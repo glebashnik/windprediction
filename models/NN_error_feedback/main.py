@@ -32,6 +32,9 @@ class NN_feedback:
         self.epochs = epochs
         self.dropout_rate = dropoutrate
         self.relu_leak = 0.2
+        self.patience = 400
+
+        self.model_path = os.path.join('models','NN_error_feedback','ckeckpoint.h5')
 
     # Build n networks and averages the final dense output
     def build_feedback_model(self, input_dim, model_structure):
@@ -55,21 +58,8 @@ class NN_feedback:
         out = Dense(1)(x)
 
         self.model = Model(inputs=[input_layer, error], outputs=out)
-        # self.model.summary()
+        return self.model
 
-    def build_simple_model(self, input_dim, model_structure):
-        input_layer = Input(shape=(input_dim,))
-
-        # x = self.dense_block(input_layer, 64, False, 0)
-        x = self.dense_block(input_layer, 32, False, 0)
-        x = self.dense_block(x, 16, False, 0)
-        x = self.dense_block(x, 8, False, 0)
-        x = self.dense_block(x, 2, False, 0)
-
-        out = Dense(1)(x)
-
-        self.model = Model(inputs=input_layer, outputs=out)
-        self.model.summary()
 
     def dense_block(self, input_data, units, dropout=False, l2_reg=0):
 
@@ -84,9 +74,9 @@ class NN_feedback:
         self.model.compile(loss='mae', optimizer=opt,
                            metrics=['mae'])
 
-        early_stopping = EarlyStopping(monitor='val_loss', patience=500)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=self.patience)
         checkpoint = ModelCheckpoint(
-            'checkpoint_model.h5', monitor='val_loss', verbose=0, save_best_only=True, mode='min')
+            self.model_path, monitor='val_loss', verbose=0, save_best_only=True, mode='min')
 
         # Train the model
         num_samples = x_train.shape[0]
@@ -133,10 +123,10 @@ class NN_feedback:
             print('Epoch {}/{}, Time: {}, loss: {}\n'.format(epoch + 1, self.epochs, int(time.time() - start), avg_epoch_loss))
 
 
-    def evaluate(self, model_path, x_test, y_test):
+    def evaluate(self, x_test, y_test):
         self.model.compile(loss='mae', optimizer='adam',
                            metrics=['mae'])
-        self.model.load_weights(model_path)
+        self.model.load_weights(self.model_path)
 
         evaluation = self.model.evaluate(x_test, y_test)
         return evaluation, self.model.metrics_names
@@ -145,7 +135,6 @@ class NN_feedback:
         from keras.utils import plot_model
         plot_model(self.model, to_file='model_architecture.png')
 
-    # RMSE loss function (missing in keras library)
     def rmse_numpy(self, y_true, y_pred):
         return np.sqrt(np.mean(np.square(y_pred - y_true), axis=-1))
 

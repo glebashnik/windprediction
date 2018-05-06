@@ -25,7 +25,6 @@ def process_dataset_nn(dataset, testsplit=0.8, pca=False):
     if pca: data_x = extract_PCA_features(data_x,n_components=40)
     x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=1-testsplit)
 
-<<<<<<< HEAD
 
 def process_dataset_nn(dataset, testsplit=0.8, pca=False):
     data_x, data_y = feature_target_split(dataset)
@@ -104,9 +103,6 @@ def process_dataset_nn(dataset, testsplit=0.8, pca=False, single_targets=False):
         x_train.shape, y_train.shape))
 
     scaler = MinMaxScaler(copy=True, feature_range=(0, 1))
-=======
-    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
->>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
     scaler.fit(x_train)
     x_train = scaler.transform(x_train)
     x_test = scaler.transform(x_test)
