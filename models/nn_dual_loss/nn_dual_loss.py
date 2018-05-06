@@ -56,6 +56,7 @@ class NN_feedback:
     def build_model(self, input_dim, output_dim):
         input_layer = Input(shape=(input_dim,))
 
+<<<<<<< HEAD
         # x1 = self.dense_block(input_layer, 128, False, 0)
 =======
 >>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
@@ -71,6 +72,30 @@ class NN_feedback:
 
         #     if layer[0] != 0:
         #         x = self.dense_block(input_data = x, units = layer[0], dropout = layer[1])
+=======
+        # x = self.dense_block(input_layer, 256, False, 0)
+        # x = self.dense_block(input_layer, 128, False, 0)
+        x = self.dense_block(input_layer, 64, False, 0)
+        x = self.dense_block(x, 32, False, 0)
+        x = self.dense_block(x, 16, False, 0)
+        x = self.dense_block(x, 8, False, 0)
+        x = self.dense_block(x, 2, False, 0)
+
+        total = Dense(1)(x)
+
+        self.model = Model(inputs=input_layer, outputs=total)
+        self.model.summary()
+        return self.model
+
+    def build_model_single_targets(self, input_dim, output_dim):
+        input_layer = Input(shape=(input_dim,))
+        # x0 = GaussianNoise(0.15)(input_layer)
+        # x1 = self.dense_block(input_layer, 128, False, 0)
+        x1 = self.dense_block(input_layer, 100, False, 0)
+        x2 = self.dense_block(x1, 60, True, 0)
+        x3 = self.dense_block(x2, 40, False, 0)
+        # x4 = self.dense_block(x3, 30, False, 0)
+>>>>>>> cd087be07de353aae2bc8a7580e1149ab0e04a02
 
         total = Dense(1)(x5)
 
@@ -86,9 +111,15 @@ class NN_feedback:
         x = BatchNormalization()(x)
         return LeakyReLU(self.relu_leak)(x)
 
+<<<<<<< HEAD
     def train_network(self, x_train, y_train, y_train_vector, opt='adam', validation_split=0.15):
         self.model.compile(loss=['mae', 'binary_crossentropy'], optimizer=opt,
                            metrics=['mae', 'mse', self.rmse])
+=======
+    def train_network(self, x_train, y_train, opt='adam', validation_split=0.15):
+        self.model.compile(loss='mae', optimizer=opt,
+                           metrics=['mae'])
+>>>>>>> cd087be07de353aae2bc8a7580e1149ab0e04a02
 
 <<<<<<< HEAD
         early_stopping = EarlyStopping(monitor='val_loss', patience=400)
@@ -102,6 +133,7 @@ class NN_feedback:
 
 <<<<<<< HEAD
         return history.history, self.model
+<<<<<<< HEAD
         
 =======
         self.model.fit(x=x_train, y=[y_train, y_train_vector], batch_size=self.batch_size, validation_split=validation_split, callbacks=[
@@ -109,6 +141,17 @@ class NN_feedback:
 >>>>>>> 6277f428e59c037e60730473841be17577ffdd0a
 
     def evaluate(self, model_path, x_test, y_test):
+=======
+
+    def predict(self, x):
+        self.model.compile(loss='mae', optimizer='adam',
+                           metrics=['mae'])
+        self.model.load_weights(self.model_path)
+
+        return self.model.predict(x)
+
+    def evaluate(self, x_test, y_test, single_targets=False):
+>>>>>>> cd087be07de353aae2bc8a7580e1149ab0e04a02
         self.model.compile(loss='mae', optimizer='adam',
                            metrics=['mae', 'mse', self.rmse])
         self.model.load_weights(model_path)
